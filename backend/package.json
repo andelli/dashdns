@@ -1,0 +1,34 @@
+{
+  "name": "dashdns-backend",
+  "version": "1.0.0",
+  "description": "DNS monitoring dashboard for dnsdist and PowerDNS resolver",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "migrate": "node db/migrate.js",
+    "seed": "node db/seed.js",
+    "setup": "npm run migrate && npm run seed",
+    "build-frontend": "cd ../frontend && npm run build"
+  },
+  "keywords": [
+    "dns",
+    "monitoring",
+    "dashboard",
+    "dnsdist",
+    "powerdns"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.16.1",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "node-cron": "^4.2.1",
+    "node-ssh": "^13.2.1",
+    "pg": "^8.21.0"
+  }
+}

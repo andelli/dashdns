@@ -1,0 +1,138 @@
+.status-indicator {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 24px;
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.status-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.healthy {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.critical {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f8f9fa;
+}
+
+.status-item.online {
+  background: #e8f5e9;
+}
+
+.status-item.offline {
+  background: #ffebee;
+}
+
+.status-item.total {
+  background: #e3f2fd;
+}
+
+.status-icon {
+  font-size: 24px;
+}
+
+.status-info {
+  flex: 1;
+}
+
+.status-count {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e3c72;
+  line-height: 1;
+}
+
+.status-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.offline-list {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 16px;
+}
+
+.offline-title {
+  font-weight: 600;
+  color: #856404;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.offline-server {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(133, 100, 4, 0.1);
+}
+
+.offline-server:last-child {
+  border-bottom: none;
+}
+
+.server-name {
+  font-weight: 600;
+  color: #856404;
+  font-size: 14px;
+}
+
+.server-ip {
+  color: #856404;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  opacity: 0.8;
+}
