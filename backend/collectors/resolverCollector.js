@@ -1,5 +1,3 @@
-const axios = require('axios')
-
 async function collect(ip, port = 8082, apiKey) {
   try {
     const response = await axios.get(
@@ -17,6 +15,8 @@ async function collect(ip, port = 8082, apiKey) {
       `Resolver collector error ${ip}:${port}:`,
       err.response?.status || err.message
     )
+
+    // Return partial data if /api endpoint fails
     return null
   }
 }
