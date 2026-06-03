@@ -1,7 +1,8 @@
 #!/bin/bash
 #
-# Build recursor-exporter dan setup/restart service
-# Jalanin langsung di resolver setelah git pull atau git clone
+# Deploy recursor-exporter — langsung copy binary + setup service
+# Jalanin langsung di resolver setelah git clone atau git pull
+# Tidak perlu Go compiler.
 #
 set -e
 
@@ -12,19 +13,21 @@ INSTALL_PATH="/usr/local/bin/$BINARY"
 SERVICE_FILE="/etc/systemd/system/$SERVICE.service"
 
 echo "========================================="
-echo "Build & Restart: $SERVICE"
+echo "Deploy: $SERVICE"
 echo "========================================="
 
 cd "$DIR"
 
-echo "[1/3] Compiling..."
-go build -o "$BINARY" .
-
-echo "[2/3] Installing to $INSTALL_PATH..."
+echo "[1/2] Installing binary to $INSTALL_PATH..."
+if [ ! -f "$BINARY" ]; then
+    echo "Error: $BINARY not found. Clone repo dulu:"
+    echo "  git clone https://github.com/andelli/dashdns.git /opt/dashdns"
+    exit 1
+fi
 cp "$BINARY" "$INSTALL_PATH"
 chmod +x "$INSTALL_PATH"
 
-echo "[3/3] Setting up service..."
+echo "[2/2] Setting up service..."
 if [ ! -f "$SERVICE_FILE" ]; then
     echo "       Creating $SERVICE_FILE..."
     cat > "$SERVICE_FILE" << 'SRVEOF'
@@ -47,12 +50,11 @@ SRVEOF
 fi
 
 systemctl daemon-reload
-systemctl enable "$SERVICE"
+systemctl enable "$SERVICE" 2>/dev/null || true
 systemctl restart "$SERVICE"
 
 echo ""
-echo "Done. Current binary:"
+echo "Done."
 ls -lh "$INSTALL_PATH"
-echo ""
 systemctl is-active --quiet "$SERVICE" && echo "Service: running" || echo "Service: NOT running"
 echo "========================================"
