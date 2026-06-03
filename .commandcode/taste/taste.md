@@ -14,6 +14,7 @@
 # database
 - Include PostgreSQL setup and installation instructions in README. Confidence: 0.65
 - Avoid destructive database operations (DELETE/DROP) - prefer non-destructive fixes instead. Confidence: 0.70
+- When adding columns via ALTER TABLE in fixes, also update the structural database schema files so new clones get the correct schema. Confidence: 0.70
 
 # deployment
 - Include PM2 and systemd service instructions in README. Confidence: 0.65
