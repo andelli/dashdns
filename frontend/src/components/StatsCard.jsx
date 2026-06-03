@@ -2,8 +2,8 @@ import './StatsCard.css'
 
 export default function StatsCard({ title, value, icon, color, subtitle }) {
   return (
-    <div className="stats-card" style={{ borderTopColor: color }}>
-      <div className="stats-card-icon" style={{ background: `${color}15`, color }}>
+    <div className="stats-card" style={{ borderTopColor: color || 'var(--color-primary)' }}>
+      <div className="stats-card-icon" style={{ background: `${color}20` }}>
         {icon}
       </div>
       <div className="stats-card-content">

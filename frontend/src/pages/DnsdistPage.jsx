@@ -46,30 +46,10 @@ export default function DnsdistPage() {
       </div>
 
       <div className="stats-grid">
-        <StatsCard
-          title="Servers"
-          value={servers.length}
-          icon="🔀"
-          color="#2a5298"
-        />
-        <StatsCard
-          title="Total QPS"
-          value={totalQps.toLocaleString()}
-          icon="⚡"
-          color="#10b981"
-        />
-        <StatsCard
-          title="Avg Cache Hit"
-          value={`${avgCacheHit.toFixed(1)}%`}
-          icon="💾"
-          color="#f59e0b"
-        />
-        <StatsCard
-          title="Total Queries"
-          value={totalQueries.toLocaleString()}
-          icon="📈"
-          color="#8b5cf6"
-        />
+        <StatsCard title="Servers" value={servers.length} icon="🔀" color="#0007cd" />
+        <StatsCard title="Total QPS" value={totalQps.toLocaleString()} icon="⚡" color="#33d17a" />
+        <StatsCard title="Avg Cache Hit" value={`${avgCacheHit.toFixed(1)}%`} icon="💾" color="#f59e0b" />
+        <StatsCard title="Total Queries" value={totalQueries.toLocaleString()} icon="📈" color="#7b3aed" />
       </div>
 
       <div className="table-card">

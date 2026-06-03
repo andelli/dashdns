@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import * as api from '../services/api'
 import './LookupPage.css'
 
@@ -26,7 +26,7 @@ export default function LookupPage() {
     }
   }
 
-  useState(() => {
+  useEffect(() => {
     loadServers()
   }, [])
 
@@ -145,7 +145,6 @@ export default function LookupPage() {
           )}
 
           {result.results ? (
-            // Multi-server comparison
             <div className="comparison-grid">
               {result.results.map((r, i) => (
                 <div key={i} className={`comparison-item ${r.error ? 'has-error' : ''}`}>
@@ -170,7 +169,6 @@ export default function LookupPage() {
               ))}
             </div>
           ) : result.answers ? (
-            // Single server result
             <div className="single-result">
               <div className="result-meta">
                 <span>Server: <strong>{result.server}</strong></span>

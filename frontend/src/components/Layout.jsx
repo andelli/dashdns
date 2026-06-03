@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
+import { useBrand } from '../context/BrandingContext'
 import ChangePassword from './ChangePassword'
 import './Layout.css'
 
@@ -8,6 +10,8 @@ export default function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const { theme, toggleTheme } = useTheme()
+  const { brand } = useBrand()
   const [showChangePassword, setShowChangePassword] = useState(false)
 
   const handleLogout = () => {
@@ -21,7 +25,14 @@ export default function Layout() {
     <div className="layout">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <h2>DashDNS</h2>
+          {brand.logoUrl ? (
+            <img src={brand.logoUrl} alt={brand.name} style={{ height: 28, width: 'auto', maxWidth: 120, objectFit: 'contain' }} />
+          ) : (
+            <>
+              <span className="brand-accent" style={{ background: brand.color }} />
+              <h2>{brand.name}</h2>
+            </>
+          )}
         </div>
 
         <nav className="sidebar-nav">
@@ -40,8 +51,13 @@ export default function Layout() {
             <span>ACL</span>
           </Link>
 
+          <Link to="/domains" className={`nav-item ${isActive('/domains') ? 'active' : ''}`}>
+            <span className="nav-icon">🌐</span>
+            <span>Domain Whitelist</span>
+          </Link>
+
           <Link to="/settings" className={`nav-item ${isActive('/settings') ? 'active' : ''}`}>
-            <span className="nav-icon">🔧</span>
+            <span className="nav-icon">⚙️</span>
             <span>Settings</span>
           </Link>
         </nav>
@@ -56,12 +72,17 @@ export default function Layout() {
               <div className="user-role">{user?.role}</div>
             </div>
           </div>
-          <button onClick={() => setShowChangePassword(true)} className="change-password-button">
-            🔑 Change Password
-          </button>
-          <button onClick={handleLogout} className="logout-button">
-            Logout
-          </button>
+          <div className="sidebar-footer-actions">
+            <button onClick={toggleTheme} className="sidebar-footer-btn">
+              {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+            </button>
+            <button onClick={() => setShowChangePassword(true)} className="sidebar-footer-btn">
+              🔑 Change Password
+            </button>
+            <button onClick={handleLogout} className="sidebar-footer-btn logout">
+              ⏻ Logout
+            </button>
+          </div>
         </div>
       </aside>
 

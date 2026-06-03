@@ -75,40 +75,17 @@ export default function ServerDetailPage() {
       </div>
 
       <div className="stats-grid">
-        <StatsCard
-          title="QPS"
-          value={Number(server.qps || 0).toLocaleString()}
-          icon="⚡"
-          color="#10b981"
-        />
-        <StatsCard
-          title="Cache Hit"
-          value={`${Number(server.cache_hit_ratio || 0).toFixed(1)}%`}
-          icon="💾"
-          color="#f59e0b"
-        />
-        <StatsCard
-          title="Total Queries"
-          value={Number(server.queries || 0).toLocaleString()}
-          icon="📈"
-          color="#8b5cf6"
-        />
-        <StatsCard
-          title="Memory"
-          value={formatBytes(Number(server.memory || 0))}
-          icon="💿"
-          color="#06b6d4"
-        />
+        <StatsCard title="QPS" value={Number(server.qps || 0).toLocaleString()} icon="⚡" color="#33d17a" />
+        <StatsCard title="Cache Hit" value={`${Number(server.cache_hit_ratio || 0).toFixed(1)}%`} icon="💾" color="#f59e0b" />
+        <StatsCard title="Total Queries" value={Number(server.queries || 0).toLocaleString()} icon="📈" color="#7b3aed" />
+        <StatsCard title="Memory" value={formatBytes(Number(server.memory || 0))} icon="💿" color="#00d4ff" />
       </div>
 
       <div className="charts-grid">
         <div className="chart-card">
           <h3>QPS History</h3>
           <QpsChart
-            data={history.map(h => ({
-              ts: h.ts,
-              qps: h.qps
-            }))}
+            data={history.map(h => ({ ts: h.ts, qps: h.qps }))}
             height="300px"
           />
         </div>
@@ -151,7 +128,9 @@ export default function ServerDetailPage() {
             </div>
             <div className="metric-item">
               <span className="metric-label">SERVFAIL/s</span>
-              <span className="metric-value warn-cell">{Number(server.servfail_delta || 0).toLocaleString()}</span>
+              <span className="metric-value" style={{ color: Number(server.servfail_delta) > 0 ? 'var(--color-warning)' : 'var(--color-ink)' }}>
+                {Number(server.servfail_delta || 0).toLocaleString()}
+              </span>
             </div>
             <div className="metric-item">
               <span className="metric-label">Timeout/s</span>

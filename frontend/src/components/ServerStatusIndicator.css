@@ -1,81 +1,57 @@
 .status-indicator {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  margin-bottom: 24px;
+  background: var(--color-surface-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-md);
+  border: 1px solid var(--color-hairline);
 }
 
 .status-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: var(--space-base);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-hairline);
 }
 
 .status-header h3 {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--color-ink);
   margin: 0;
-  font-size: 18px;
-  color: #333;
-  font-weight: 600;
-}
-
-.status-badge {
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.status-badge.healthy {
-  background: #d4edda;
-  color: #155724;
-}
-
-.status-badge.warning {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.status-badge.critical {
-  background: #f8d7da;
-  color: #721c24;
 }
 
 .status-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-base);
 }
 
 .status-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 8px;
-  background: #f8f9fa;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
 }
 
 .status-item.online {
-  background: #e8f5e9;
+  background: rgba(51, 209, 122, 0.08);
 }
 
 .status-item.offline {
-  background: #ffebee;
+  background: rgba(255, 77, 77, 0.08);
 }
 
 .status-item.total {
-  background: #e3f2fd;
+  background: rgba(0, 7, 205, 0.08);
 }
 
 .status-icon {
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .status-info {
@@ -84,32 +60,33 @@
 
 .status-count {
   font-size: 24px;
-  font-weight: 700;
-  color: #1e3c72;
-  line-height: 1;
+  font-weight: 500;
+  color: var(--color-ink);
+  line-height: 1.15;
+  letter-spacing: -0.5px;
 }
 
 .status-label {
-  font-size: 12px;
-  color: #666;
+  font-size: 11px;
+  color: var(--color-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 4px;
+  letter-spacing: 0.88px;
+  font-weight: 600;
+  margin-top: 2px;
 }
 
 .offline-list {
-  background: #fff3cd;
-  border: 1px solid #ffc107;
-  border-radius: 8px;
-  padding: 12px;
-  margin-top: 16px;
+  background: rgba(255, 77, 77, 0.06);
+  border: 1px solid rgba(255, 77, 77, 0.15);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
 }
 
 .offline-title {
   font-weight: 600;
-  color: #856404;
-  margin-bottom: 8px;
-  font-size: 14px;
+  color: var(--color-error);
+  margin-bottom: var(--space-xs);
+  font-size: 13px;
 }
 
 .offline-server {
@@ -117,7 +94,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 6px 0;
-  border-bottom: 1px solid rgba(133, 100, 4, 0.1);
+  border-bottom: 1px solid rgba(255, 77, 77, 0.08);
 }
 
 .offline-server:last-child {
@@ -125,14 +102,14 @@
 }
 
 .server-name {
-  font-weight: 600;
-  color: #856404;
+  font-weight: 500;
+  color: var(--color-error);
   font-size: 14px;
 }
 
 .server-ip {
-  color: #856404;
-  font-family: 'Courier New', monospace;
+  color: var(--color-muted);
+  font-family: var(--font-mono);
   font-size: 13px;
   opacity: 0.8;
 }

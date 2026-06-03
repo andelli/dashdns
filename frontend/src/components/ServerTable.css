@@ -8,38 +8,41 @@
   font-size: 14px;
 }
 
-.server-table th {
+.server-table thead th {
   text-align: left;
-  padding: 12px 16px;
-  background: #f8fafc;
-  color: #666;
+  padding: var(--space-sm) var(--space-base);
+  background: transparent;
+  color: var(--color-muted);
   font-weight: 600;
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 2px solid #e5e7eb;
+  letter-spacing: 0.88px;
+  border-bottom: 1px solid var(--color-hairline);
+  white-space: nowrap;
 }
 
-.server-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
-  color: #333;
+.server-table tbody td {
+  padding: var(--space-sm) var(--space-base);
+  border-bottom: 1px solid var(--color-hairline-soft);
+  color: var(--color-body);
+  white-space: nowrap;
 }
 
 .clickable-row {
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.12s ease;
 }
 
 .clickable-row:hover {
-  background: #f8fafc;
+  background: var(--color-surface-card-elevated);
 }
 
 .hostname-cell {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 600;
+  gap: var(--space-xs);
+  font-weight: 500;
+  color: var(--color-body-strong);
 }
 
 .status-dot {
@@ -50,46 +53,49 @@
 }
 
 .status-dot.online {
-  background: #10b981;
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+  background: var(--color-success);
+  box-shadow: 0 0 8px rgba(51, 209, 122, 0.4);
 }
 
 .status-dot.offline {
-  background: #ef4444;
-  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+  background: var(--color-error);
+  box-shadow: 0 0 8px rgba(255, 77, 77, 0.4);
 }
 
 .ip-cell {
-  color: #666;
-  font-family: monospace;
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
 }
 
 .qps-cell strong {
-  color: #1e3c72;
-  font-size: 16px;
+  color: var(--color-ink);
+  font-weight: 500;
+  font-size: 15px;
 }
 
 .cache-bar-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 
 .cache-bar {
   height: 6px;
-  border-radius: 3px;
+  border-radius: var(--radius-pill);
   min-width: 4px;
-  transition: width 0.3s;
+  transition: width 0.3s ease;
   max-width: 80px;
 }
 
 .warn-cell {
-  color: #f59e0b;
-  font-weight: 600;
+  color: var(--color-warning);
+  font-weight: 500;
 }
 
 .table-empty {
   text-align: center;
-  padding: 32px;
-  color: #999;
+  padding: var(--space-xl);
+  color: var(--color-muted-soft);
+  font-size: 14px;
 }

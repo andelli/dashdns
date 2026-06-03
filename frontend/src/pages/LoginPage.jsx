@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useBrand } from '../context/BrandingContext'
 import './Login.css'
 
 export default function LoginPage() {
@@ -9,6 +10,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
+  const { brand } = useBrand()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -30,7 +32,12 @@ export default function LoginPage() {
     <div className="login-container">
       <div className="login-box">
         <div className="login-header">
-          <h1>DashDNS</h1>
+          {brand.logoUrl ? (
+            <img src={brand.logoUrl} alt={brand.name} style={{ height: 48, width: 'auto', maxWidth: 200, objectFit: 'contain', marginBottom: 16 }} />
+          ) : (
+            <div className="brand-icon" style={{ background: brand.color }}>🔀</div>
+          )}
+          <h1>{brand.name}</h1>
           <p>DNS Monitoring Dashboard</p>
         </div>
 
@@ -60,7 +67,7 @@ export default function LoginPage() {
             />
           </div>
 
-          <button type="submit" className="login-button" disabled={loading}>
+          <button type="submit" className="login-button" disabled={loading} style={{ background: brand.color }}>
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>

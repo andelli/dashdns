@@ -85,7 +85,7 @@ export default function ChangePassword({ onClose }) {
             />
           </div>
 
-          <div className="form-actions">
+          <div className="modal-actions">
             <button type="button" className="btn btn-secondary" onClick={onClose}>
               Cancel
             </button>

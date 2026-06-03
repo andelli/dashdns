@@ -11,7 +11,6 @@ export default function AclPage() {
   const [deploying, setDeploying] = useState(false)
   const [deployMsg, setDeployMsg] = useState(null)
 
-  // Filter & sort state
   const [filterType, setFilterType] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
   const [search, setSearch] = useState('')
@@ -121,21 +120,10 @@ export default function AclPage() {
     }
   }
 
-  // Filter & sort
   const filtered = useMemo(() => {
     let result = [...entries]
-
-    // Filter type
-    if (filterType !== 'all') {
-      result = result.filter(e => e.type === filterType)
-    }
-
-    // Filter status
-    if (filterStatus !== 'all') {
-      result = result.filter(e => e.enabled === (filterStatus === 'enabled'))
-    }
-
-    // Search
+    if (filterType !== 'all') result = result.filter(e => e.type === filterType)
+    if (filterStatus !== 'all') result = result.filter(e => e.enabled === (filterStatus === 'enabled'))
     if (search.trim()) {
       const q = search.toLowerCase()
       result = result.filter(e =>
@@ -143,8 +131,6 @@ export default function AclPage() {
         (e.description || '').toLowerCase().includes(q)
       )
     }
-
-    // Sort
     result.sort((a, b) => {
       let va = a[sortKey] || ''
       let vb = b[sortKey] || ''
@@ -159,31 +145,17 @@ export default function AclPage() {
       if (va > vb) return sortDir === 'asc' ? 1 : -1
       return 0
     })
-
     return result
   }, [entries, filterType, filterStatus, search, sortKey, sortDir])
 
   const toggleSort = (key) => {
-    if (sortKey === key) {
-      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortKey(key)
-      setSortDir('asc')
-    }
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortKey(key); setSortDir('asc') }
   }
 
   const sortIcon = (key) => {
     if (sortKey !== key) return ' ↕'
     return sortDir === 'asc' ? ' ↑' : ' ↓'
-  }
-
-  const selectStyle = {
-    padding: '8px 12px',
-    border: '1px solid #ddd',
-    borderRadius: 6,
-    fontSize: 14,
-    background: 'white',
-    cursor: 'pointer'
   }
 
   if (loading) {
@@ -199,23 +171,9 @@ export default function AclPage() {
 
       <div className="action-bar">
         <button className="btn btn-primary" onClick={openAdd}>+ Add Entry</button>
-        <button className="btn btn-secondary" onClick={handleExport} style={{ marginLeft: 12 }}>
-          📥 Export Config
-        </button>
-        <button
-          className="btn btn-secondary"
-          onClick={handleSync}
-          disabled={deploying}
-          style={{ marginLeft: 12 }}
-        >
-          📥 Sync from dnsdist
-        </button>
-        <button
-          className="btn btn-secondary"
-          onClick={handleDeploy}
-          disabled={deploying}
-          style={{ marginLeft: 12 }}
-        >
+        <button className="btn btn-secondary" onClick={handleExport}>📥 Export Config</button>
+        <button className="btn btn-secondary" onClick={handleSync} disabled={deploying}>📥 Sync from dnsdist</button>
+        <button className="btn btn-secondary" onClick={handleDeploy} disabled={deploying}>
           {deploying ? '⏳ Deploying...' : '🚀 Deploy to dnsdist'}
         </button>
       </div>
@@ -226,26 +184,25 @@ export default function AclPage() {
         </div>
       )}
 
-      {/* Filter Bar */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+      <div className="acl-filters">
         <input
           type="text"
+          className="acl-search-input"
           placeholder="🔍 Search IP or description..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 6, fontSize: 14, flex: 1, minWidth: 200 }}
         />
-        <select value={filterType} onChange={e => setFilterType(e.target.value)} style={selectStyle}>
+        <select className="acl-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
           <option value="all">All Types</option>
           <option value="whitelist">Whitelist</option>
           <option value="blacklist">Blacklist</option>
         </select>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={selectStyle}>
+        <select className="acl-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
           <option value="all">All Status</option>
           <option value="enabled">Enabled</option>
           <option value="disabled">Disabled</option>
         </select>
-        <span style={{ fontSize: 13, color: '#999' }}>{filtered.length} of {entries.length}</span>
+        <span className="acl-count">{filtered.length} of {entries.length}</span>
       </div>
 
       <div className="table-card">
@@ -253,11 +210,11 @@ export default function AclPage() {
           <table className="acl-table">
             <thead>
               <tr>
-                <th onClick={() => toggleSort('ip_or_subnet')} style={{ cursor: 'pointer' }}>IP / Subnet{sortIcon('ip_or_subnet')}</th>
-                <th onClick={() => toggleSort('description')} style={{ cursor: 'pointer' }}>Description{sortIcon('description')}</th>
-                <th onClick={() => toggleSort('type')} style={{ cursor: 'pointer' }}>Type{sortIcon('type')}</th>
+                <th className="sortable" onClick={() => toggleSort('ip_or_subnet')}>IP / Subnet{sortIcon('ip_or_subnet')}</th>
+                <th className="sortable" onClick={() => toggleSort('description')}>Description{sortIcon('description')}</th>
+                <th className="sortable" onClick={() => toggleSort('type')}>Type{sortIcon('type')}</th>
                 <th>Status</th>
-                <th onClick={() => toggleSort('created_at')} style={{ cursor: 'pointer' }}>Created{sortIcon('created_at')}</th>
+                <th className="sortable" onClick={() => toggleSort('created_at')}>Created{sortIcon('created_at')}</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -271,22 +228,13 @@ export default function AclPage() {
                   <tr key={entry.id}>
                     <td className="ip-cell">{entry.ip_or_subnet}</td>
                     <td>{entry.description || '-'}</td>
+                    <td><span className={`type-badge ${entry.type}`}>{entry.type}</span></td>
                     <td>
-                      <span className={`type-badge ${entry.type}`}>
-                        {entry.type}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        className={`toggle-btn ${entry.enabled ? 'enabled' : 'disabled'}`}
-                        onClick={() => handleToggle(entry.id)}
-                      >
+                      <button className={`toggle-btn ${entry.enabled ? 'enabled' : 'disabled'}`} onClick={() => handleToggle(entry.id)}>
                         {entry.enabled ? 'Enabled' : 'Disabled'}
                       </button>
                     </td>
-                    <td className="date-cell">
-                      {new Date(entry.created_at).toLocaleDateString('id-ID')}
-                    </td>
+                    <td className="date-cell">{new Date(entry.created_at).toLocaleDateString('id-ID')}</td>
                     <td className="actions-cell">
                       <button className="btn-icon" onClick={() => openEdit(entry)} title="Edit">✏️</button>
                       <button className="btn-icon btn-danger" onClick={() => handleDelete(entry.id)} title="Hapus">🗑️</button>
@@ -309,21 +257,11 @@ export default function AclPage() {
             <div className="acl-form">
               <div className="form-group">
                 <label>IP / Subnet *</label>
-                <input
-                  type="text"
-                  placeholder="192.168.1.0/24, 10.0.0.5, etc."
-                  value={form.ip_or_subnet}
-                  onChange={e => setForm({ ...form, ip_or_subnet: e.target.value })}
-                />
+                <input type="text" placeholder="192.168.1.0/24, 10.0.0.5, etc." value={form.ip_or_subnet} onChange={e => setForm({ ...form, ip_or_subnet: e.target.value })} />
               </div>
               <div className="form-group">
                 <label>Description</label>
-                <input
-                  type="text"
-                  placeholder="Office network, VPN, etc."
-                  value={form.description}
-                  onChange={e => setForm({ ...form, description: e.target.value })}
-                />
+                <input type="text" placeholder="Office network, VPN, etc." value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
               </div>
               <div className="form-group">
                 <label>Type</label>
@@ -332,11 +270,9 @@ export default function AclPage() {
                   <option value="blacklist">Blacklist</option>
                 </select>
               </div>
-              <div className="form-actions">
+              <div className="modal-actions">
                 <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleSave}>
-                  {editing ? 'Update' : 'Add'}
-                </button>
+                <button className="btn btn-primary" onClick={handleSave}>{editing ? 'Update' : 'Add'}</button>
               </div>
             </div>
           </div>

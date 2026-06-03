@@ -8,29 +8,40 @@ export default function QpsChart({ data, title, height = '350px' }) {
     const option = {
       tooltip: {
         trigger: 'axis',
-        backgroundColor: 'rgba(30, 60, 114, 0.9)',
-        borderColor: 'transparent',
-        textStyle: { color: '#fff' }
+        backgroundColor: '#181818',
+        borderColor: '#333',
+        textStyle: { color: '#fff', fontSize: 13 },
+        formatter: (params) => {
+          const p = params[0]
+          return `<div style="font-family: 'JetBrains Mono', monospace; font-size: 12px">
+            ${p.axisValue}<br/>
+            <span style="color:#33d17a">●</span> QPS: <strong>${p.value}</strong>
+          </div>`
+        }
       },
       grid: { left: 60, right: 20, top: 20, bottom: 30 },
       xAxis: {
         type: 'category',
         data: data.map(d => d.ts ? new Date(d.ts).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : ''),
         boundaryGap: false,
-        axisLabel: { fontSize: 11 }
+        axisLine: { lineStyle: { color: '#222' } },
+        axisLabel: { fontSize: 11, color: '#888' },
+        splitLine: { show: false }
       },
       yAxis: {
         type: 'value',
         name: 'QPS',
-        axisLabel: { fontSize: 11 }
+        nameTextStyle: { color: '#888', fontSize: 11 },
+        axisLabel: { fontSize: 11, color: '#888' },
+        splitLine: { lineStyle: { color: '#1a1a1a', type: 'dashed' } }
       },
       series: [{
         type: 'line',
         smooth: true,
         symbol: 'none',
         data: data.map(d => Number(d.qps) || 0),
-        lineStyle: { color: '#10b981', width: 2 },
-        areaStyle: { color: 'rgba(16, 185, 129, 0.1)' }
+        lineStyle: { color: '#33d17a', width: 2 },
+        areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(51,209,122,0.15)' }, { offset: 1, color: 'rgba(51,209,122,0)' }] } }
       }]
     }
     return <ReactECharts option={option} style={{ height }} />
@@ -60,14 +71,18 @@ export default function QpsChart({ data, title, height = '350px' }) {
     })
   }
 
+  const colors = ['#33d17a', '#00d4ff', '#7b3aed', '#f59e0b', '#ff4d4d', '#0007cd']
+
   const allSeries = [
-    ...Object.entries(dnsdistSeries).map(([name, d]) => ({
+    ...Object.entries(dnsdistSeries).map(([name, d], i) => ({
       name, type: 'line', smooth: true, symbol: 'none', data: d.values,
-      lineStyle: { width: 2 }, areaStyle: { opacity: 0.1 }
+      lineStyle: { width: 2, color: colors[i % colors.length] },
+      areaStyle: { opacity: 0.08 }
     })),
-    ...Object.entries(resolverSeries).map(([name, d]) => ({
+    ...Object.entries(resolverSeries).map(([name, d], i) => ({
       name, type: 'line', smooth: true, symbol: 'none', data: d.values,
-      lineStyle: { width: 2, type: 'dashed' }, areaStyle: { opacity: 0.05 }
+      lineStyle: { width: 2, type: 'dashed', color: colors[(i + Object.keys(dnsdistSeries).length) % colors.length] },
+      areaStyle: { opacity: 0.04 }
     }))
   ]
 
@@ -79,28 +94,32 @@ export default function QpsChart({ data, title, height = '350px' }) {
   const option = {
     tooltip: {
       trigger: 'axis',
-      backgroundColor: 'rgba(30, 60, 114, 0.9)',
-      borderColor: 'transparent',
-      textStyle: { color: '#fff' }
+      backgroundColor: '#181818',
+      borderColor: '#333',
+      textStyle: { color: '#fff', fontSize: 13 }
     },
     legend: {
       data: [...Object.keys(dnsdistSeries), ...Object.keys(resolverSeries)],
-      bottom: 0
+      bottom: 0,
+      textStyle: { color: '#a8a8a8', fontSize: 12 }
     },
     grid: { left: 60, right: 20, top: 20, bottom: 40 },
     xAxis: {
       type: 'category',
       data: allTimes.length > 0 ? allTimes : undefined,
-      axisLabel: { fontSize: 11 },
+      axisLabel: { fontSize: 11, color: '#888' },
+      axisLine: { lineStyle: { color: '#222' } },
+      splitLine: { show: false },
       boundaryGap: false
     },
     yAxis: {
       type: 'value',
       name: 'QPS',
-      axisLabel: { fontSize: 11 }
+      nameTextStyle: { color: '#888', fontSize: 11 },
+      axisLabel: { fontSize: 11, color: '#888' },
+      splitLine: { lineStyle: { color: '#1a1a1a', type: 'dashed' } }
     },
-    series: allSeries,
-    color: ['#2a5298', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4']
+    series: allSeries
   }
 
   return <ReactECharts option={option} style={{ height }} />

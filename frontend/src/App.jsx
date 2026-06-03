@@ -8,13 +8,14 @@ import ResolverPage from './pages/ResolverPage'
 import ServerDetailPage from './pages/ServerDetailPage'
 import LookupPage from './pages/LookupPage'
 import AclPage from './pages/AclPage'
+import DomainWhitelistPage from './pages/DomainWhitelistPage'
 import SettingsPage from './pages/SettingsPage'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
 
   if (loading) {
-    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: 18, color: '#666' }}>Loading...</div>
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: 16, color: '#888', fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif" }}>Loading...</div>
   }
 
   if (!user) {
@@ -28,7 +29,7 @@ function PublicRoute({ children }) {
   const { user, loading } = useAuth()
 
   if (loading) {
-    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: 18, color: '#666' }}>Loading...</div>
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: 16, color: '#888', fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif" }}>Loading...</div>
   }
 
   if (user) {
@@ -55,6 +56,7 @@ function AppRoutes() {
         <Route path="/resolvers/:id" element={<ServerDetailPage />} />
         <Route path="/lookup" element={<LookupPage />} />
         <Route path="/acl" element={<AclPage />} />
+        <Route path="/domains" element={<DomainWhitelistPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
 

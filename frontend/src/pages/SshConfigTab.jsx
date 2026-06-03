@@ -41,11 +41,12 @@ export default function SshConfigTab() {
     <div className="table-card">
       <h3>dnsdist SSH Configuration</h3>
       {msg && <div className={`deploy-msg ${msg.type}`} style={{ marginBottom: 16 }}>{msg.type === 'success' ? '✅' : '❌'} {msg.text}</div>}
-      <div className="server-form" style={{ marginTop: 16 }}>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
         <div className="form-group">
           <label>SSH Host(s)</label>
           <input type="text" placeholder="dnsdist01.example.com,dnsdist02.example.com" value={settings.dnsdist_ssh_host} onChange={e => setSettings({ ...settings, dnsdist_ssh_host: e.target.value })} />
-          <span style={{ fontSize: 12, color: '#999' }}>Comma-separated untuk multiple servers</span>
+          <span style={{ fontSize: 12, color: 'var(--color-muted-soft)' }}>Comma-separated untuk multiple servers</span>
         </div>
         <div className="form-row">
           <div className="form-group">
@@ -61,13 +62,13 @@ export default function SshConfigTab() {
           <label>SSH Private Key Path</label>
           <input type="text" value={settings.dnsdist_ssh_key_path} onChange={e => setSettings({ ...settings, dnsdist_ssh_key_path: e.target.value })} />
         </div>
-        <div className="form-actions">
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
           <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Settings'}</button>
           <button className="btn btn-secondary" onClick={handleTestSsh} disabled={testing}>{testing ? 'Testing...' : '🔌 Test SSH Connection'}</button>
         </div>
         {testResults && (
           <div style={{ marginTop: 24 }}>
-            <h4 style={{ marginBottom: 12 }}>Test Results:</h4>
+            <h4 style={{ color: 'var(--color-ink)', marginBottom: 12, fontWeight: 500 }}>Test Results:</h4>
             {testResults.map((r, i) => (
               <div key={i} className={`deploy-msg ${r.status === 'success' ? 'success' : 'error'}`} style={{ marginBottom: 8 }}>
                 <strong>{r.host}</strong>: {r.status === 'success' ? '✅ Connected' : `❌ ${r.error}`}

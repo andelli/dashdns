@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import SshConfigTab from './SshConfigTab'
 import ServersTab from './ServersTab'
+import BrandingTab from './BrandingTab'
 import './ServersPage.css'
 
 export default function SettingsPage() {
@@ -10,25 +11,33 @@ export default function SettingsPage() {
     <div className="servers-page">
       <div className="page-header">
         <h1>Settings</h1>
-        <p className="subtitle">Manage servers and SSH configuration</p>
+        <p className="subtitle">Manage servers, branding, and SSH configuration</p>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
         <button
-          className={`btn ${tab === 'servers' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`btn ${tab === 'servers' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setTab('servers')}
         >
-          Server Management
+          🖥️ Servers
         </button>
         <button
-          className={`btn ${tab === 'ssh' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`btn ${tab === 'branding' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setTab('branding')}
+        >
+          🎨 Branding
+        </button>
+        <button
+          className={`btn ${tab === 'ssh' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setTab('ssh')}
         >
-          SSH Configuration
+          🔌 SSH
         </button>
       </div>
 
-      {tab === 'servers' ? <ServersTab /> : <SshConfigTab />}
+      {tab === 'servers' && <ServersTab />}
+      {tab === 'branding' && <BrandingTab />}
+      {tab === 'ssh' && <SshConfigTab />}
     </div>
   )
 }

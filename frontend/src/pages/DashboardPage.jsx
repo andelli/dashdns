@@ -48,7 +48,6 @@ export default function DashboardPage() {
   const offlineServers = allServers.filter(s => !s.qps && s.qps !== 0 && s.ts === null)
   const onlineCount = allServers.length - offlineServers.length
 
-  // dnsdist aggregated stats
   const dnsdistQps = dnsdist.reduce((sum, s) => sum + Number(s.qps || 0), 0)
   const dnsdistCache = dnsdist.length > 0
     ? dnsdist.reduce((sum, s) => sum + Number(s.cache_hit_ratio || 0), 0) / dnsdist.length : 0
@@ -56,7 +55,6 @@ export default function DashboardPage() {
   const dnsdistTimeout = dnsdist.reduce((sum, s) => sum + Number(s.downstreams_timeout_delta || 0), 0)
   const dnsdistAclDrop = dnsdist.reduce((sum, s) => sum + Number(s.acl_drops_delta || 0), 0)
 
-  // Resolver aggregated stats
   const resolverQps = resolvers.reduce((sum, s) => sum + Number(s.qps || 0), 0)
   const resolverCache = resolvers.length > 0
     ? resolvers.reduce((sum, s) => sum + Number(s.cache_hit_ratio || 0), 0) / resolvers.length : 0
@@ -65,14 +63,11 @@ export default function DashboardPage() {
 
   return (
     <div className="dashboard">
-      {/* Header */}
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h1 style={{ margin: '0 0 4px 0' }}>Dashboard</h1>
-          <p className="subtitle" style={{ margin: 0, color: '#666' }}>
-            Real-time DNS monitoring · {totals.servers} servers · Refresh 10s
-          </p>
-        </div>
+      <div className="page-header">
+        <h1>Dashboard</h1>
+        <p className="subtitle">
+          Real-time DNS monitoring · {totals.servers} servers · Refresh 10s
+        </p>
       </div>
 
       {offlineServers.length > 0 && (
@@ -81,18 +76,16 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ============= GLOBAL STATS ============= */}
       <div className="section-label">
         <span className="section-icon">📊</span> Global Overview
       </div>
       <div className="stats-grid">
-        <StatsCard title="Total Servers" value={totals.servers} icon="🖥️" color="#2a5298" />
-        <StatsCard title="Total QPS" value={totals.totalQps.toLocaleString()} icon="⚡" color="#10b981" />
-        <StatsCard title="Total Queries" value={totals.totalQueries.toLocaleString()} icon="📊" color="#ef4444" />
-        <StatsCard title="Memory" value={totals.totalMemory ? `${(totals.totalMemory / 1024 / 1024 / 1024).toFixed(1)} GB` : 'N/A'} icon="💿" color="#06b6d4" />
+        <StatsCard title="Total Servers" value={totals.servers} icon="🖥️" color="#0007cd" />
+        <StatsCard title="Total QPS" value={totals.totalQps.toLocaleString()} icon="⚡" color="#33d17a" />
+        <StatsCard title="Total Queries" value={totals.totalQueries.toLocaleString()} icon="📊" color="#ff4d4d" />
+        <StatsCard title="Memory" value={totals.totalMemory ? `${(totals.totalMemory / 1024 / 1024 / 1024).toFixed(1)} GB` : 'N/A'} icon="💿" color="#00d4ff" />
       </div>
 
-      {/* QPS Chart (all servers) */}
       <div className="charts-section">
         <div className="chart-card">
           <h3>QPS Trend · All Servers</h3>
@@ -100,41 +93,39 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ============= DNSDIST SECTION ============= */}
       <div className="section-label">
         <span className="section-icon">🔀</span> dnsdist — Frontend Load Balancer
       </div>
 
       <div className="stats-grid">
-        <StatsCard title="Servers" value={dnsdist.length} icon="🔀" color="#2a5298" />
-        <StatsCard title="QPS" value={dnsdistQps.toLocaleString()} icon="⚡" color="#10b981" subtitle="Frontend" />
+        <StatsCard title="Servers" value={dnsdist.length} icon="🔀" color="#0007cd" />
+        <StatsCard title="QPS" value={dnsdistQps.toLocaleString()} icon="⚡" color="#33d17a" subtitle="Frontend" />
         <StatsCard title="Cache Hit" value={`${dnsdistCache.toFixed(1)}%`} icon="💾" color="#f59e0b" subtitle="Average" />
-        <StatsCard title="SERVFAIL/s" value={dnsdistServfail.toLocaleString()} icon="❌" color="#ef4444" subtitle="Rate" />
+        <StatsCard title="SERVFAIL/s" value={dnsdistServfail.toLocaleString()} icon="❌" color="#ff4d4d" subtitle="Rate" />
         <StatsCard title="Timeout/s" value={dnsdistTimeout.toLocaleString()} icon="⏰" color="#f59e0b" subtitle="Downstream" />
-        <StatsCard title="ACL Drop/s" value={dnsdistAclDrop.toLocaleString()} icon="🛡️" color="#8b5cf6" subtitle="Rate" />
+        <StatsCard title="ACL Drop/s" value={dnsdistAclDrop.toLocaleString()} icon="🛡️" color="#7b3aed" subtitle="Rate" />
       </div>
 
-      <div className="status-grid" style={{ marginBottom: 16 }}>
+      <div className="status-grid">
         <ServerStatusIndicator servers={dnsdist} type="dnsdist" />
       </div>
 
-      <div className="table-card" style={{ marginBottom: 32 }}>
+      <div className="table-card">
         <h3>dnsdist Servers</h3>
         <ServerTable servers={dnsdist} type="dnsdist" onRowClick={(id) => navigate(`/dnsdist/${id}`)} />
       </div>
 
-      {/* ============= RESOLVER SECTION ============= */}
       <div className="section-label">
         <span className="section-icon">🔄</span> Resolver — PowerDNS Recursor
       </div>
 
       <div className="stats-grid">
-        <StatsCard title="Servers" value={resolvers.length} icon="🔄" color="#2a5298" />
-        <StatsCard title="QPS" value={resolverQps.toLocaleString()} icon="⚡" color="#10b981" subtitle="Backend" />
-        <StatsCard title="Cache Hit" value={`${resolverCache.toFixed(1)}%`} icon="💾" color="#8b5cf6" subtitle="Average" />
+        <StatsCard title="Servers" value={resolvers.length} icon="🔄" color="#0007cd" />
+        <StatsCard title="QPS" value={resolverQps.toLocaleString()} icon="⚡" color="#33d17a" subtitle="Backend" />
+        <StatsCard title="Cache Hit" value={`${resolverCache.toFixed(1)}%`} icon="💾" color="#7b3aed" subtitle="Average" />
       </div>
 
-      <div className="status-grid" style={{ marginBottom: 16 }}>
+      <div className="status-grid">
         <ServerStatusIndicator servers={resolvers} type="resolver" />
       </div>
 

@@ -53,7 +53,7 @@ export default function ServerTable({ servers, type, onRowClick }) {
                     className="cache-bar"
                     style={{
                       width: `${Math.min(Number(server.cache_hit_ratio || 0), 100)}%`,
-                      background: Number(server.cache_hit_ratio) > 50 ? '#10b981' : '#f59e0b'
+                      background: Number(server.cache_hit_ratio) > 50 ? 'var(--color-success)' : 'var(--color-warning)'
                     }}
                   />
                   <span>{Number(server.cache_hit_ratio || 0).toFixed(1)}%</span>
