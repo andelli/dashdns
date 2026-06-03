@@ -23,10 +23,26 @@ router.get('/:resolverId', async (req, res) => {
 
     const response = await axios.get(`http://${ip}:${port}/stats`, { timeout: 5000 })
 
+    const topQueries = (response.data.top_queries || []).map(q => {
+      const totalEntries = response.data.top_queries_total_entries || 12500
+      return {
+        ...q,
+        count: q.count || Math.round((q.percentage / 100) * totalEntries)
+      }
+    })
+
+    const topRemotes = (response.data.top_remotes || []).map(r => {
+      const totalEntries = response.data.top_remotes_total_entries || 12500
+      return {
+        ...r,
+        count: r.count || Math.round((r.percentage / 100) * totalEntries)
+      }
+    })
+
     res.json({
       server: server.rows[0],
-      top_queries: response.data.top_queries || [],
-      top_remotes: response.data.top_remotes || []
+      top_queries: topQueries,
+      top_remotes: topRemotes
     })
   } catch (err) {
     console.error('Top data error:', err)
