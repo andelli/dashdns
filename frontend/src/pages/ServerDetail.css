@@ -128,3 +128,41 @@
   color: var(--color-ink);
   letter-spacing: -0.5px;
 }
+
+@media (max-width: 768px) {
+  .detail-header {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-base);
+  }
+
+  .header-info h1 {
+    font-size: 20px;
+  }
+
+  .time-range-selector {
+    width: 100%;
+  }
+
+  .time-range-selector select {
+    width: 100%;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--space-base);
+  }
+
+  .metrics-section {
+    grid-template-columns: 1fr;
+    gap: var(--space-base);
+  }
+
+  .metrics-card {
+    padding: var(--space-base);
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

@@ -5,6 +5,126 @@ const { authenticateToken } = require('../middleware/auth')
 
 router.use(authenticateToken)
 
+function formatAddress(addr) {
+  if (typeof addr === 'object' && addr !== null) return addr
+  return { value: String(addr) }
+}
+
+function annotateAnswer(answer, queryType) {
+  if (!answer || typeof answer !== 'object') {
+    return { value: String(answer || '') }
+  }
+
+  // Use answer's own .type if available, otherwise use queryType as fallback
+  const t = answer.type ? answer.type.toUpperCase() : (queryType || '').toUpperCase()
+
+  const out = { recordType: t }
+
+  if (t === 'A' || t === 'AAAA') {
+    out.value = answer.address
+    out.ttl = answer.ttl
+    return out
+  }
+  if (t === 'MX') {
+    out.value = `${answer.priority} ${answer.exchange}`
+    out.priority = answer.priority
+    out.exchange = answer.exchange
+    out.ttl = answer.ttl
+    return out
+  }
+  if (t === 'SOA') {
+    out.value = `${answer.nsname} ${answer.hostmaster} ${answer.serial} ${answer.refresh} ${answer.retry} ${answer.expire} ${answer.minttl}`
+    out.nsname = answer.nsname
+    out.hostmaster = answer.hostmaster
+    out.serial = answer.serial
+    out.refresh = answer.refresh
+    out.retry = answer.retry
+    out.expire = answer.expire
+    out.minttl = answer.minttl
+    out.ttl = answer.ttl
+    return out
+  }
+  if (t === 'SRV') {
+    out.value = `${answer.priority} ${answer.weight} ${answer.port} ${answer.name}`
+    out.priority = answer.priority
+    out.weight = answer.weight
+    out.port = answer.port
+    out.name = answer.name
+    out.ttl = answer.ttl
+    return out
+  }
+  if (t === 'CAA') {
+    out.value = `${answer.critical ? 'critical ' : ''}${answer.tag} "${answer.issue || answer.value}"`
+    out.critical = answer.critical
+    out.tag = answer.tag
+    out.issue = answer.issue || answer.value
+    out.ttl = answer.ttl
+    return out
+  }
+  if (t === 'TXT') {
+    // resolveTxt returns [['text1', 'text2']], resolve() with ttl returns similar
+    // resolveAny returns { entries: ['text'], type: 'TXT' }
+    const entries = Array.isArray(answer) ? answer : (answer.entries || [])
+    out.value = Array.isArray(entries) ? entries.join(' ') : String(entries || '')
+    out.ttl = answer.ttl
+    return out
+  }
+  if (t === 'NS' || t === 'CNAME' || t === 'PTR') {
+    out.value = answer.value
+    out.ttl = answer.ttl
+    return out
+  }
+
+  out.value = answer.value || answer.address || String(answer)
+  out.ttl = answer.ttl
+  return out
+}
+
+async function performLookup(resolver, domain, queryType) {
+  const type = queryType.toUpperCase()
+
+  // Use generic resolve() with ttl:true for all types that support it
+  // resolveAny() always returns TTL
+  if (type === 'ANY') return await resolver.resolveAny(domain)
+
+  // For A, AAAA we pass ttl:true
+  if (type === 'A') return await resolver.resolve4(domain, { ttl: true })
+  if (type === 'AAAA') return await resolver.resolve6(domain, { ttl: true })
+
+  // For others use generic resolve with ttl
+  try {
+    const result = await resolver.resolve(domain, type, { ttl: true })
+    return result
+  } catch {
+    // Fallback to specific methods
+    switch (type) {
+      case 'MX': return await resolver.resolveMx(domain)
+      case 'TXT': return await resolver.resolveTxt(domain)
+      case 'NS': return await resolver.resolveNs(domain)
+      case 'CNAME': return await resolver.resolveCname(domain)
+      case 'SOA': return await resolver.resolveSoa(domain)
+      case 'SRV': return await resolver.resolveSrv(domain)
+      case 'PTR': return await resolver.resolvePtr(domain)
+      case 'CAA': return await resolver.resolveCaa(domain)
+      default: return await resolver.resolve4(domain, { ttl: true })
+    }
+  }
+}
+
+function detectType(ans) {
+  if (!ans || typeof ans !== 'object') return null
+  if ('address' in ans && ans.address.includes(':')) return 'AAAA'
+  if ('address' in ans) return 'A'
+  if ('exchange' in ans || 'priority' in ans) return 'MX'
+  if ('nsname' in ans) return 'SOA'
+  if ('name' in ans && 'port' in ans) return 'SRV'
+  if ('tag' in ans) return 'CAA'
+  if (Array.isArray(ans)) return 'TXT'
+  if (typeof ans === 'string') return 'NS'
+  if (ans.type) return ans.type
+  return null
+}
+
 // POST /api/lookup - Perform DNS lookup through a specific server
 router.post('/', async (req, res) => {
   try {
@@ -20,53 +140,16 @@ router.post('/', async (req, res) => {
 
     const queryType = type || 'A'
     const startTime = Date.now()
-    const results = []
     let error = null
+    let answers = []
 
-    // Configure dns to use the specified server
     const resolver = new dns.Resolver()
     resolver.setServers([`${server}:53`])
 
     try {
-      let answer
-      switch (queryType.toUpperCase()) {
-        case 'A':
-          answer = await resolver.resolve4(domain)
-          break
-        case 'AAAA':
-          answer = await resolver.resolve6(domain)
-          break
-        case 'MX':
-          answer = await resolver.resolveMx(domain)
-          break
-        case 'TXT':
-          answer = await resolver.resolveTxt(domain)
-          break
-        case 'NS':
-          answer = await resolver.resolveNs(domain)
-          break
-        case 'CNAME':
-          answer = await resolver.resolveCname(domain)
-          break
-        case 'SOA':
-          answer = await resolver.resolveSoa(domain)
-          break
-        case 'SRV':
-          answer = await resolver.resolveSrv(domain)
-          break
-        case 'PTR':
-          answer = await resolver.resolvePtr(domain)
-          break
-        case 'CAA':
-          answer = await resolver.resolveCaa(domain)
-          break
-        case 'ANY':
-          answer = await resolver.resolve(domain)
-          break
-        default:
-          answer = await resolver.resolve4(domain)
-      }
-      results.push(...(Array.isArray(answer) ? answer : [answer]))
+      const raw = await performLookup(resolver, domain, queryType)
+      const items = Array.isArray(raw) ? raw : [raw]
+      answers = items.map(a => annotateAnswer(a, queryType))
     } catch (err) {
       error = err.code || err.message
     }
@@ -75,10 +158,10 @@ router.post('/', async (req, res) => {
 
     res.json({
       domain,
-      type: queryType,
+      type: queryType.toUpperCase(),
       server,
       responseTime,
-      answers: results,
+      answers,
       error,
       timestamp: new Date().toISOString()
     })
@@ -105,33 +188,12 @@ router.post('/multi', async (req, res) => {
         resolver.setServers([`${server}:53`])
 
         try {
-          let answer
-          switch (queryType.toUpperCase()) {
-            case 'A':
-              answer = await resolver.resolve4(domain)
-              break
-            case 'AAAA':
-              answer = await resolver.resolve6(domain)
-              break
-            case 'MX':
-              answer = await resolver.resolveMx(domain)
-              break
-            case 'TXT':
-              answer = await resolver.resolveTxt(domain)
-              break
-            case 'NS':
-              answer = await resolver.resolveNs(domain)
-              break
-            case 'CNAME':
-              answer = await resolver.resolveCname(domain)
-              break
-            default:
-              answer = await resolver.resolve4(domain)
-          }
+          const raw = await performLookup(resolver, domain, queryType)
+          const items = Array.isArray(raw) ? raw : [raw]
           return {
             server,
             responseTime: Date.now() - startTime,
-            answers: Array.isArray(answer) ? answer : [answer],
+            answers: items.map(a => annotateAnswer(a, queryType)),
             error: null
           }
         } catch (err) {
@@ -147,8 +209,8 @@ router.post('/multi', async (req, res) => {
 
     res.json({
       domain,
-      type: queryType,
-      results: results.map(r => r.value || { ...r.reason, answers: [], error: 'failed' }),
+      type: queryType.toUpperCase(),
+      results: results.map(r => r.value || { server: 'unknown', answers: [], error: 'lookup failed' }),
       timestamp: new Date().toISOString()
     })
   } catch (err) {

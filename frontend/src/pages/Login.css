@@ -102,3 +102,20 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+@media (max-width: 480px) {
+  .login-box {
+    margin: var(--space-base);
+    padding: var(--space-lg);
+    max-width: none;
+  }
+
+  .login-header h1 {
+    font-size: 28px;
+  }
+
+  .login-container::before {
+    width: 400px;
+    height: 400px;
+  }
+}

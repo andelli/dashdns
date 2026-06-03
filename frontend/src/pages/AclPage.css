@@ -191,3 +191,31 @@
   flex-direction: column;
   gap: var(--space-base);
 }
+
+@media (max-width: 768px) {
+  .acl-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .acl-search-input {
+    min-width: unset;
+  }
+
+  .acl-table thead th:nth-child(3),
+  .acl-table tbody td:nth-child(3),
+  .acl-table thead th:nth-child(5),
+  .acl-table tbody td:nth-child(5) {
+    display: none;
+  }
+
+  .acl-table tbody td {
+    font-size: 13px;
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .acl-table-wrapper {
+    margin: 0 calc(-1 * var(--space-base));
+    width: auto;
+  }
+}

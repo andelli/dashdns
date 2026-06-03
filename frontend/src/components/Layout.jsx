@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -13,6 +13,23 @@ export default function Layout() {
   const { theme, toggleTheme } = useTheme()
   const { brand } = useBrand()
   const [showChangePassword, setShowChangePassword] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const closeSidebar = () => setSidebarOpen(false)
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [location.pathname])
+
+  // Close sidebar on Escape (mobile)
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'Escape') closeSidebar()
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
 
   const handleLogout = () => {
     logout()
@@ -23,7 +40,38 @@ export default function Layout() {
 
   return (
     <div className="layout">
-      <aside className="sidebar">
+      {/* Mobile top bar */}
+      <div className="mobile-topbar">
+        <button
+          className="hamburger-btn"
+          onClick={() => setSidebarOpen(o => !o)}
+          aria-label="Toggle navigation menu"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            {sidebarOpen ? (
+              <>
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </>
+            ) : (
+              <>
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </>
+            )}
+          </svg>
+        </button>
+        <span className="mobile-brand">{brand.name}</span>
+      </div>
+
+      {/* Overlay (mobile) */}
+      <div
+        className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
+        onClick={closeSidebar}
+      />
+
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           {brand.logoUrl ? (
             <img src={brand.logoUrl} alt={brand.name} style={{ height: 28, width: 'auto', maxWidth: 120, objectFit: 'contain' }} />

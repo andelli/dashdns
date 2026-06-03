@@ -1,3 +1,10 @@
 .dnsdist-page, .resolver-page {
   max-width: 1400px;
 }
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: var(--space-xs);
+  }
+}

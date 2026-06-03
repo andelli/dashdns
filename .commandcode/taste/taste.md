@@ -36,3 +36,10 @@
 
 # acl
 - For DashDNS: Simplify ACL page by removing blacklist, enable/disable controls — user only uses whitelist entries. Confidence: 0.75
+
+# responsive
+- For DashDNS: Make the full application mobile-responsive (all pages, not just specific features). Confidence: 0.70
+- For DashDNS responsive work: Focus on mobile display first before adjusting desktop layout. Confidence: 0.65
+
+# deployment
+- For DashDNS: Do not use a reverse proxy (Nginx/Apache) - serve DashDNS directly on its port. Confidence: 0.65

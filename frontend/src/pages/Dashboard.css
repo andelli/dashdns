@@ -27,3 +27,26 @@
 .charts-section {
   margin-bottom: var(--space-xl);
 }
+
+@media (max-width: 768px) {
+  .status-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-base);
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--space-base);
+  }
+
+  .chart-card {
+    padding: var(--space-base);
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: var(--space-xs);
+  }
+}

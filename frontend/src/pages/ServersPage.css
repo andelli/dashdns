@@ -1,3 +1,10 @@
 .servers-page {
   max-width: 1400px;
 }
+
+@media (max-width: 768px) {
+  .servers-page .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: var(--space-xs);
+  }
+}
