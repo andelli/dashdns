@@ -16,15 +16,17 @@ router.get('/overview', async (req, res) => {
         ds.cache_hit_ratio,
         ds.latency_avg,
         ds.real_memory_usage as memory,
-        ds.nxdomain, ds.servfail,
+        ds.nxdomain, ds.nxdomain_delta,
+        ds.servfail, ds.servfail_delta,
+        ds.downstreams_timeout, ds.downstreams_timeout_delta,
+        ds.acl_drops, ds.acl_drops_delta,
         ds.queries, ds.cache_hits, ds.cache_misses,
-        ds.acl_drops, ds.downstreams_timeout,
         ds.ts
       FROM servers s
       LEFT JOIN LATERAL (
         SELECT * FROM dnsdist_stats
         WHERE server_id = s.id
-        ORDER BY ts DESC LIMIT 1
+        ORDER BY id DESC LIMIT 1
       ) ds ON true
       WHERE s.type = 'dnsdist' AND s.enabled = true
       ORDER BY s.hostname
@@ -39,15 +41,17 @@ router.get('/overview', async (req, res) => {
         rs.packet_cache_hits, rs.packet_cache_misses,
         rs.latency_avg,
         rs.memory_usage as memory,
-        rs.nxdomain, rs.servfail,
+        rs.nxdomain, rs.nxdomain_delta,
+        rs.servfail, rs.servfail_delta,
+        rs.timeouts, rs.timeouts_delta,
         rs.queries, rs.cache_hits, rs.cache_misses,
-        rs.concurrent_queries, rs.timeouts,
+        rs.concurrent_queries,
         rs.ts
       FROM servers s
       LEFT JOIN LATERAL (
         SELECT * FROM resolver_stats
         WHERE server_id = s.id
-        ORDER BY ts DESC LIMIT 1
+        ORDER BY id DESC LIMIT 1
       ) rs ON true
       WHERE s.type = 'resolver' AND s.enabled = true
       ORDER BY s.hostname

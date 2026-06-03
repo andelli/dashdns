@@ -55,7 +55,7 @@ async function collectPdnsStats(ip, port, apiKey) {
       packetCacheRatio: data.packetcache_ratio || 0,
       nxdomain: data.nxdomain || 0,
       servfail: data.servfail || 0,
-      latency: data.latency || 0,
+      latency: (data.latency || 0) / 1000,
       memoryBytes: data.memory_bytes || 0,
       concurrentQueries: data.concurrent_queries || 0,
       outgoingTimeouts: data.outgoing_timeouts || 0,
@@ -74,7 +74,9 @@ async function collectResolver() {
     SELECT * FROM servers WHERE type = 'resolver' AND enabled = true
   `)
 
-  for (const server of servers.rows) {
+  const now = new Date()
+
+  await Promise.allSettled(servers.rows.map(async (server) => {
     try {
       console.log(`[Collector] Collecting resolver: ${server.hostname} (${server.ip})`)
 
@@ -83,48 +85,60 @@ async function collectResolver() {
       const pdnsStats = await collectPdnsStats(server.ip, pdnsPort, server.api_key || process.env.DNSDIST_API_KEY)
       
       if (pdnsStats) {
-        // Calculate QPS delta
+        // Calculate deltas
         const lastRecord = await pool.query(`
-          SELECT queries FROM resolver_stats
-          WHERE server_id = $1 ORDER BY ts DESC LIMIT 1
+          SELECT queries, nxdomain, servfail, outgoing_timeouts FROM resolver_stats
+          WHERE server_id = $1 ORDER BY id DESC LIMIT 1
         `, [server.id])
 
-        let queriesDelta = 0
-        if (lastRecord.rows.length > 0) {
-          const prevQueries = Number(lastRecord.rows[0].queries)
-          const diff = Number(pdnsStats.queries) - prevQueries
-          queriesDelta = diff > 0 ? Math.round(diff / 10) : 0
+        const calcDelta = (curr, field) => {
+          if (lastRecord.rows.length === 0) return 0
+          const prev = Number(lastRecord.rows[0][field] || 0)
+          const diff = Number(curr) - prev
+          return diff > 0 ? Math.round(diff / 10) : 0
         }
+
+        const queriesDelta = calcDelta(pdnsStats.queries, 'queries')
+        const nxdomainDelta = calcDelta(pdnsStats.nxdomain, 'nxdomain')
+        const servfailDelta = calcDelta(pdnsStats.servfail, 'servfail')
+        const timeoutsDelta = calcDelta(pdnsStats.outgoingTimeouts, 'outgoing_timeouts')
 
         await pool.query(`
           INSERT INTO resolver_stats (
             server_id, ts, is_up, response_time,
             queries, queries_delta,
+            nxdomain, nxdomain_delta,
+            servfail, servfail_delta,
+            timeouts, timeouts_delta,
             cache_hits, cache_misses, cache_hit_ratio,
             packet_cache_hits, packet_cache_misses, packet_cache_size,
-            nxdomain, servfail, timeouts,
             latency_avg, memory_usage,
             cpu_user, cpu_system,
             concurrent_queries, outgoing_timeouts
           ) VALUES (
-            $1, NOW() AT TIME ZONE 'Asia/Jakarta', true, 0,
-            $2, $3, $4, $5, $6, $7, $8, $9,
-            $10, $11, $12,
-            $13, $14,
+            $1, $2, true, 0,
+            $3, $4,
+            $5, $6,
+            $7, $8,
+            $9, $10,
+            $11, $12, $13, $14, $15, $16,
+            $17, $18,
             0, 0,
-            $15, $16
+            $19, $20
           )
         `, [
-          server.id,
+          server.id, now,
           pdnsStats.queries, queriesDelta,
+          pdnsStats.nxdomain, nxdomainDelta,
+          pdnsStats.servfail, servfailDelta,
+          pdnsStats.outgoingTimeouts, timeoutsDelta,
           pdnsStats.cacheHits, pdnsStats.cacheMisses, pdnsStats.cacheRatio,
           pdnsStats.packetCacheHits, pdnsStats.packetCacheMisses, 0,
-          pdnsStats.nxdomain, pdnsStats.servfail, pdnsStats.outgoingTimeouts,
           pdnsStats.latency, pdnsStats.memoryBytes,
           pdnsStats.concurrentQueries, pdnsStats.outgoingTimeouts
         ])
 
-        console.log(`[Collector] ✓ ${server.hostname} port 9000: QPS=${queriesDelta}, CacheHit=${pdnsStats.cacheRatio.toFixed(1)}%, PacketCache=${pdnsStats.packetCacheRatio.toFixed(1)}%`)
+        console.log(`[Collector] ✓ ${server.hostname} port 9000: QPS=${queriesDelta}, SERVFAIL/s=${servfailDelta}, Timeout/s=${timeoutsDelta}`)
       } else {
         // Fallback: ambil last known values agar grafik tidak putus
         const lastKnown = await pool.query(`
@@ -133,7 +147,7 @@ async function collectResolver() {
                  nxdomain, servfail, concurrent_queries, timeouts
           FROM resolver_stats
           WHERE server_id = $1 AND queries_delta IS NOT NULL
-          ORDER BY ts DESC LIMIT 1
+          ORDER BY id DESC LIMIT 1
         `, [server.id])
 
         const lk = lastKnown.rows[0] || {}
@@ -158,15 +172,15 @@ async function collectResolver() {
             latency_avg, memory_usage,
             concurrent_queries
           ) VALUES (
-            $1, NOW() AT TIME ZONE 'Asia/Jakarta', $2, $3,
-            $4, $5, $6,
-            $7, $8,
-            $9, $10, $11,
-            $12, $13,
-            $14
+            $1, $2, $3, $4,
+            $5, $6, $7,
+            $8, $9,
+            $10, $11, $12,
+            $13, $14,
+            $15
           )
         `, [
-          server.id, result.up, result.responseTime,
+          server.id, now, result.up, result.responseTime,
           lk.queries || 0, lk.qps || 0, lk.cache_hit_ratio || 0,
           lk.cache_hits || 0, lk.cache_misses || 0,
           lk.nxdomain || 0, lk.servfail || 0, lk.timeouts || 0,
@@ -183,7 +197,7 @@ async function collectResolver() {
     } catch (err) {
       console.error(`[Collector] resolver ${server.hostname} error:`, err.message)
     }
-  }
+  }))
 }
 
 module.exports = { collectResolver }

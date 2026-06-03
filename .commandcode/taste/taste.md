@@ -13,6 +13,7 @@
 
 # database
 - Include PostgreSQL setup and installation instructions in README. Confidence: 0.65
+- Avoid destructive database operations (DELETE/DROP) - prefer non-destructive fixes instead. Confidence: 0.70
 
 # deployment
 - Include PM2 and systemd service instructions in README. Confidence: 0.65

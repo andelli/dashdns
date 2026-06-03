@@ -12,6 +12,8 @@ export default function ServerTable({ servers, type, onRowClick }) {
     return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`
   }
 
+  const isDnsdist = type === 'dnsdist'
+
   return (
     <div className="server-table-wrapper">
       <table className="server-table">
@@ -22,8 +24,10 @@ export default function ServerTable({ servers, type, onRowClick }) {
             <th>QPS</th>
             <th>Cache Hit</th>
             <th>Queries</th>
-            <th>NXDOMAIN</th>
-            <th>SERVFAIL</th>
+            <th>NXDOMAIN/s</th>
+            <th>SERVFAIL/s</th>
+            <th>Timeout/s</th>
+            {isDnsdist && <th>ACL Drop/s</th>}
             <th>Latency</th>
             <th>Memory</th>
           </tr>
@@ -56,10 +60,12 @@ export default function ServerTable({ servers, type, onRowClick }) {
                 </div>
               </td>
               <td>{Number(server.queries || 0).toLocaleString()}</td>
-              <td>{Number(server.nxdomain || 0).toLocaleString()}</td>
-              <td className={Number(server.servfail) > 0 ? 'warn-cell' : ''}>
-                {Number(server.servfail || 0).toLocaleString()}
+              <td>{Number(server.nxdomain_delta || 0).toLocaleString()}</td>
+              <td className={Number(server.servfail_delta) > 0 ? 'warn-cell' : ''}>
+                {Number(server.servfail_delta || 0).toLocaleString()}
               </td>
+              <td>{Number(isDnsdist ? server.downstreams_timeout_delta : server.timeouts_delta || 0).toLocaleString()}</td>
+              {isDnsdist && <td>{Number(server.acl_drops_delta || 0).toLocaleString()}</td>}
               <td>{Number(server.latency_avg || 0).toFixed(1)} ms</td>
               <td>{formatBytes(Number(server.memory || 0))}</td>
             </tr>

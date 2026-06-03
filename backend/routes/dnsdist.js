@@ -14,18 +14,21 @@ router.get('/', async (req, res) => {
         ds.queries_delta as qps,
         ds.queries,
         ds.cache_hits, ds.cache_misses, ds.cache_hit_ratio,
-        ds.nxdomain, ds.servfail,
+        ds.nxdomain, ds.nxdomain_delta,
+        ds.servfail, ds.servfail_delta,
+        ds.downstreams_timeout, ds.downstreams_timeout_delta,
+        ds.acl_drops, ds.acl_drops_delta,
         ds.latency_avg, ds.latency_tcp, ds.latency_udp,
         ds.real_memory_usage as memory,
         ds.cpu_user, ds.cpu_system,
-        ds.frontend_nhqueries, ds.downstreams_timeout,
-        ds.acl_drops, ds.rule_drop, ds.rule_nxdomain,
+        ds.frontend_nhqueries,
+        ds.rule_drop, ds.rule_nxdomain,
         ds.ts
       FROM servers s
       LEFT JOIN LATERAL (
         SELECT * FROM dnsdist_stats
         WHERE server_id = s.id
-        ORDER BY ts DESC LIMIT 1
+        ORDER BY id DESC LIMIT 1
       ) ds ON true
       WHERE s.type = 'dnsdist'
       ORDER BY s.hostname
@@ -46,18 +49,21 @@ router.get('/:id', async (req, res) => {
         ds.queries_delta as qps,
         ds.queries,
         ds.cache_hits, ds.cache_misses, ds.cache_hit_ratio,
-        ds.nxdomain, ds.servfail,
+        ds.nxdomain, ds.nxdomain_delta,
+        ds.servfail, ds.servfail_delta,
+        ds.downstreams_timeout, ds.downstreams_timeout_delta,
+        ds.acl_drops, ds.acl_drops_delta,
         ds.latency_avg, ds.latency_tcp, ds.latency_udp,
         ds.real_memory_usage as memory,
         ds.cpu_user, ds.cpu_system,
-        ds.frontend_nhqueries, ds.downstreams_timeout,
-        ds.acl_drops, ds.rule_drop, ds.rule_nxdomain,
+        ds.frontend_nhqueries,
+        ds.rule_drop, ds.rule_nxdomain,
         ds.ts
       FROM servers s
       LEFT JOIN LATERAL (
         SELECT * FROM dnsdist_stats
         WHERE server_id = s.id
-        ORDER BY ts DESC LIMIT 1
+        ORDER BY id DESC LIMIT 1
       ) ds ON true
       WHERE s.id = $1 AND s.type = 'dnsdist'
     `, [req.params.id])

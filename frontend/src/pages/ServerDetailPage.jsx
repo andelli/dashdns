@@ -135,13 +135,31 @@ export default function ServerDetailPage() {
               <span className="metric-label">Cache Misses</span>
               <span className="metric-value">{Number(server.cache_misses || 0).toLocaleString()}</span>
             </div>
+          </div>
+        </div>
+
+        <div className="metrics-card">
+          <h3>Rate Per Second</h3>
+          <div className="metrics-grid">
             <div className="metric-item">
-              <span className="metric-label">NXDOMAIN</span>
-              <span className="metric-value">{Number(server.nxdomain || 0).toLocaleString()}</span>
+              <span className="metric-label">QPS</span>
+              <span className="metric-value">{Number(server.qps || 0).toLocaleString()}</span>
             </div>
             <div className="metric-item">
-              <span className="metric-label">SERVFAIL</span>
-              <span className="metric-value">{Number(server.servfail || 0).toLocaleString()}</span>
+              <span className="metric-label">NXDOMAIN/s</span>
+              <span className="metric-value">{Number(server.nxdomain_delta || 0).toLocaleString()}</span>
+            </div>
+            <div className="metric-item">
+              <span className="metric-label">SERVFAIL/s</span>
+              <span className="metric-value warn-cell">{Number(server.servfail_delta || 0).toLocaleString()}</span>
+            </div>
+            <div className="metric-item">
+              <span className="metric-label">Timeout/s</span>
+              <span className="metric-value">{Number(server.downstreams_timeout_delta || 0).toLocaleString()}</span>
+            </div>
+            <div className="metric-item">
+              <span className="metric-label">ACL Drop/s</span>
+              <span className="metric-value">{Number(server.acl_drops_delta || 0).toLocaleString()}</span>
             </div>
           </div>
         </div>

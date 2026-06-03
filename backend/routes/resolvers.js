@@ -16,8 +16,9 @@ router.get('/', async (req, res) => {
         rs.cache_hits, rs.cache_misses, rs.cache_hit_ratio,
         rs.cache_size, rs.cache_entries,
         rs.packet_cache_hits, rs.packet_cache_misses, rs.packet_cache_size,
-        rs.nxdomain, rs.servfail,
-        rs.timeouts, rs.throttle,
+        rs.nxdomain, rs.nxdomain_delta,
+        rs.servfail, rs.servfail_delta,
+        rs.timeouts, rs.timeouts_delta,
         rs.latency_avg,
         rs.memory_usage as memory,
         rs.cpu_user, rs.cpu_system,
@@ -28,7 +29,7 @@ router.get('/', async (req, res) => {
       LEFT JOIN LATERAL (
         SELECT * FROM resolver_stats
         WHERE server_id = s.id
-        ORDER BY ts DESC LIMIT 1
+        ORDER BY id DESC LIMIT 1
       ) rs ON true
       WHERE s.type = 'resolver'
       ORDER BY s.hostname
@@ -51,8 +52,9 @@ router.get('/:id', async (req, res) => {
         rs.cache_hits, rs.cache_misses, rs.cache_hit_ratio,
         rs.cache_size, rs.cache_entries,
         rs.packet_cache_hits, rs.packet_cache_misses, rs.packet_cache_size,
-        rs.nxdomain, rs.servfail,
-        rs.timeouts, rs.throttle,
+        rs.nxdomain, rs.nxdomain_delta,
+        rs.servfail, rs.servfail_delta,
+        rs.timeouts, rs.timeouts_delta,
         rs.latency_avg,
         rs.memory_usage as memory,
         rs.cpu_user, rs.cpu_system,
@@ -63,7 +65,7 @@ router.get('/:id', async (req, res) => {
       LEFT JOIN LATERAL (
         SELECT * FROM resolver_stats
         WHERE server_id = s.id
-        ORDER BY ts DESC LIMIT 1
+        ORDER BY id DESC LIMIT 1
       ) rs ON true
       WHERE s.id = $1 AND s.type = 'resolver'
     `, [req.params.id])
@@ -86,13 +88,15 @@ router.get('/:id/history', async (req, res) => {
     const result = await pool.query(`
       SELECT
         ts, queries, queries_delta as qps,
+        nxdomain, nxdomain_delta,
+        servfail, servfail_delta,
+        timeouts, timeouts_delta,
         cache_hit_ratio, cache_hits, cache_misses,
         packet_cache_hits, packet_cache_misses, packet_cache_size,
-        nxdomain, servfail,
         latency_avg,
         memory_usage as memory,
         cpu_user, cpu_system,
-        concurrent_queries, timeouts,
+        concurrent_queries,
         dnssec_validations, dnssec_bogus
       FROM resolver_stats
       WHERE server_id = $1

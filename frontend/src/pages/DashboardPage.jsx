@@ -52,11 +52,16 @@ export default function DashboardPage() {
   const dnsdistQps = dnsdist.reduce((sum, s) => sum + Number(s.qps || 0), 0)
   const dnsdistCache = dnsdist.length > 0
     ? dnsdist.reduce((sum, s) => sum + Number(s.cache_hit_ratio || 0), 0) / dnsdist.length : 0
+  const dnsdistServfail = dnsdist.reduce((sum, s) => sum + Number(s.servfail_delta || 0), 0)
+  const dnsdistTimeout = dnsdist.reduce((sum, s) => sum + Number(s.downstreams_timeout_delta || 0), 0)
+  const dnsdistAclDrop = dnsdist.reduce((sum, s) => sum + Number(s.acl_drops_delta || 0), 0)
 
   // Resolver aggregated stats
   const resolverQps = resolvers.reduce((sum, s) => sum + Number(s.qps || 0), 0)
   const resolverCache = resolvers.length > 0
     ? resolvers.reduce((sum, s) => sum + Number(s.cache_hit_ratio || 0), 0) / resolvers.length : 0
+  const resolverServfail = resolvers.reduce((sum, s) => sum + Number(s.servfail_delta || 0), 0)
+  const resolverTimeout = resolvers.reduce((sum, s) => sum + Number(s.timeouts_delta || 0), 0)
 
   return (
     <div className="dashboard">
@@ -104,6 +109,9 @@ export default function DashboardPage() {
         <StatsCard title="Servers" value={dnsdist.length} icon="🔀" color="#2a5298" />
         <StatsCard title="QPS" value={dnsdistQps.toLocaleString()} icon="⚡" color="#10b981" subtitle="Frontend" />
         <StatsCard title="Cache Hit" value={`${dnsdistCache.toFixed(1)}%`} icon="💾" color="#f59e0b" subtitle="Average" />
+        <StatsCard title="SERVFAIL/s" value={dnsdistServfail.toLocaleString()} icon="❌" color="#ef4444" subtitle="Rate" />
+        <StatsCard title="Timeout/s" value={dnsdistTimeout.toLocaleString()} icon="⏰" color="#f59e0b" subtitle="Downstream" />
+        <StatsCard title="ACL Drop/s" value={dnsdistAclDrop.toLocaleString()} icon="🛡️" color="#8b5cf6" subtitle="Rate" />
       </div>
 
       <div className="status-grid" style={{ marginBottom: 16 }}>

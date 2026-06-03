@@ -38,19 +38,17 @@ app.get('/{*splat}', (req, res) => {
 
 const PORT = process.env.PORT || 3000
 
-app.listen(PORT, '0.0.0.0', async () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`DashDNS API running on 0.0.0.0:${PORT}`)
-  console.log('Running initial data collection...')
-
-  await collectDnsdist()
-  await collectResolver()
-
-  console.log('Initial collection completed')
 })
 
-// Run collectors every 10 seconds
-cron.schedule('*/10 * * * * *', async () => {
-  console.log('[Collector] Running...')
-  await collectDnsdist()
-  await collectResolver()
-})
+// Run collectors every 10 seconds (start after 10s to avoid startup overlap)
+setTimeout(() => {
+  cron.schedule('*/10 * * * * *', async () => {
+    console.log('[Collector] Running...')
+    await Promise.all([
+      collectDnsdist(),
+      collectResolver()
+    ])
+  })
+}, 10000)
