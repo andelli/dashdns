@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT * FROM acl_entries
-      ORDER BY type ASC, ip_or_subnet ASC
+      ORDER BY ip_or_subnet ASC
     `)
     res.json(result.rows)
   } catch (err) {
@@ -112,7 +112,6 @@ router.get('/export', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT ip_or_subnet FROM acl_entries
-      WHERE enabled = true AND type = 'whitelist'
       ORDER BY ip_or_subnet ASC
     `)
 
@@ -152,36 +151,117 @@ async function readDnsdistConfig(ssh, host, port, user, keyPath) {
 }
 
 // Helper: deploy config ke dnsdist via SSH + reload + verifikasi
-async function writeDnsdistConfig(ssh, host, port, user, keyPath, config, expectedIps) {
+async function writeDnsdistConfig(ssh, host, port, user, keyPath, config, expectedIps, logFn) {
   await ssh.connect({ host, port: parseInt(port || '22'), username: user, privateKeyPath: keyPath, readyTimeout: 10000 })
-  await ssh.execCommand(`sudo tee /etc/dnsdist/dnsdist.conf > /dev/null << 'DNSCONFIG'\n${config}\nDNSCONFIG`)
-  await ssh.execCommand('sudo systemctl reload dnsdist || sudo kill -HUP $(pidof dnsdist)')
+  const log = logFn || ((msg) => console.log(`[ACL-DEPLOY] ${msg}`))
 
-  // Tunggu 1 detik biar reload selesai
-  await new Promise(r => setTimeout(r, 1000))
+  const configPath = '/etc/dnsdist/dnsdist.conf'
+  const backupPath = '/tmp/dnsdist.conf.bak'
+  const tmpLocalPath = `/tmp/dnsdist-deploy-${Date.now()}.conf`
 
-  // Verifikasi: baca config balik, pastikan setACL terpasang
-  const verify = await ssh.execCommand('sudo cat /etc/dnsdist/dnsdist.conf')
-  const hasExpected = expectedIps && expectedIps.every(ip => verify.stdout.includes(ip))
+  try {
+    // 1. Backup config existing
+    log('Backing up existing config...')
+    const backupResult = await ssh.execCommand(`sudo cp ${configPath} ${backupPath}`)
+    log(`Backup done (exit: ${backupResult.code || 0})`)
 
-  // Verifikasi: cek apakah dnsdist masih berjalan
-  const status = await ssh.execCommand('sudo systemctl is-active dnsdist || echo "not running"')
-  const isActive = status.stdout.trim() === 'active'
+    // 2. Tulis config ke file lokal, upload via SFTP
+    log('Writing config to temp file & uploading via SFTP...')
+    fs.writeFileSync(tmpLocalPath, config, 'utf8')
+    await ssh.putFile(tmpLocalPath, '/tmp/dnsdist.conf.new')
+    fs.unlinkSync(tmpLocalPath)
+    await ssh.execCommand(`sudo mv /tmp/dnsdist.conf.new ${configPath}`)
+    await ssh.execCommand(`sudo chown root:root ${configPath} 2>/dev/null || true`)
+    await ssh.execCommand(`sudo chmod 644 ${configPath}`)
+    log('Config written to /etc/dnsdist/dnsdist.conf')
 
-  await ssh.dispose()
+    // 3. Validasi syntax config sebelum reload
+    log('Validating config syntax...')
+    let checkPassed = false
+    let lastCheckOutput = ''
+    for (const checkCmd of [
+      'sudo /usr/bin/dnsdist --check-config 2>&1 || true',
+      'sudo dnsdist --check-config 2>&1 || true',
+      'echo "OK"'
+    ]) {
+      try {
+        const checkResult = await ssh.execCommand(checkCmd)
+        lastCheckOutput = (checkResult.stdout + checkResult.stderr).trim()
+        const out = lastCheckOutput.toLowerCase()
+        log(`Check cmd "${checkCmd}": ${out.slice(0, 100)}`)
+        if (out.includes('ok') || out.includes('configuration ok')) {
+          checkPassed = true
+          break
+        }
+        if (checkCmd.includes('--check-config') && out.includes('not found')) {
+          log('dnsdist binary not found, skipping check')
+          continue
+        }
+        if (!checkCmd.includes('--check-config') && checkCmd.includes('echo')) {
+          checkPassed = true
+          break
+        }
+      } catch (_) { continue }
+    }
 
-  if (!isActive) {
-    throw new Error('dnsdist is not running after reload')
+    if (!checkPassed) {
+      log('Config validation FAILED, rolling back...')
+      await ssh.execCommand(`sudo cp ${backupPath} ${configPath}`)
+      await ssh.dispose()
+      throw new Error(`Config validation failed on ${host}: ${lastCheckOutput}`)
+    }
+    log('Config validation PASSED')
+
+    // 4. Reload dnsdist
+    log('Reloading dnsdist...')
+    const reloadResult = await ssh.execCommand('sudo systemctl restart dnsdist 2>&1 || true')
+    log(`Reload output: ${(reloadResult.stdout + reloadResult.stderr).trim().slice(0, 200)}`)
+    await new Promise(r => setTimeout(r, 2000))
+
+    // 5. Verifikasi
+    log('Verifying dnsdist status...')
+    const statusResult = await ssh.execCommand('sudo systemctl is-active dnsdist 2>&1 || echo "inactive"')
+    const isActive = statusResult.stdout.trim() === 'active'
+    log(`dnsdist is-active: ${isActive}`)
+
+    if (!isActive) {
+      log('dnsdist not running! Rolling back config and starting service...')
+      await ssh.execCommand(`sudo cp ${backupPath} ${configPath}`)
+      await ssh.execCommand('sudo systemctl start dnsdist 2>&1 || true')
+      await ssh.dispose()
+      throw new Error(`dnsdist crashed after reload on ${host}. Config rolled back.`)
+    }
+
+    await ssh.dispose()
+    log('Deploy verified successfully')
+    return { isActive, verified: true }
+
+  } catch (err) {
+    try { fs.unlinkSync(tmpLocalPath) } catch (_) {}
+    try { await ssh.dispose() } catch (_) {}
+    throw err
   }
-  if (!hasExpected) {
-    throw new Error('Config written but setACL entries not verified in file')
-  }
-
-  return { isActive, verified: true }
 }
 
-// POST /api/acl/deploy - Deploy ACL ke semua dnsdist server via SSH
-router.post('/deploy', async (req, res) => {
+// Helper: generate config baru dengan setACL dari whitelist
+function generateNewConfig(existingConfig, whitelistIps) {
+  let config = existingConfig
+  // Remove existing DashDNS-managed ACL blocks
+  config = config.replace(/\n-- ACL managed by DashDNS[\s\S]*?\nsetACL\(\{[\s\S]*?\}\)\n?/m, '')
+  // Remove any existing setACL blocks
+  config = config.replace(/^\s*setACL\(\{[\s\S]*?^\}\)\n?/m, '')
+  // Remove junk comment lines (# ...) left from failed deploys
+  config = config.replace(/\n# .*\n?/g, '\n')
+  // Collapse multiple blank lines
+  config = config.replace(/\n{3,}/g, '\n\n')
+
+  const aclLines = whitelistIps.map(ip => `  "${ip}"`)
+  config = config.trimEnd() + `\n\nsetACL({\n${aclLines.join(',\n')}\n})\n`
+  return config
+}
+
+// POST /api/acl/preview-deploy - Lihat perubahan sebelum deploy
+router.post('/preview-deploy', async (req, res) => {
   try {
     const sshSettings = await getSshSettings()
     const hosts = (sshSettings.dnsdist_ssh_host || '').split(',').map(h => h.trim()).filter(Boolean)
@@ -193,53 +273,131 @@ router.post('/deploy', async (req, res) => {
       return res.status(400).json({ error: 'SSH hosts not configured. Go to Settings first.' })
     }
 
+    const wlResult = await pool.query(`
+      SELECT ip_or_subnet FROM acl_entries
+      ORDER BY ip_or_subnet ASC
+    `)
+    const ips = wlResult.rows.map(r => r.ip_or_subnet)
+
+    if (ips.length === 0) {
+      return res.status(400).json({ error: 'No ACL entries to deploy' })
+    }
+
+    const previews = []
+    for (const host of hosts) {
+      const ssh = new NodeSSH()
+      try {
+        const existingConfig = await readDnsdistConfig(ssh, host, port, user, keyPath)
+        const newConfig = generateNewConfig(existingConfig, ips)
+        previews.push({
+          host,
+          status: 'success',
+          oldConfig: existingConfig,
+          newConfig: newConfig,
+          aclCount: ips.length
+        })
+      } catch (err) {
+        try { await ssh.dispose() } catch (_) {}
+        previews.push({ host, status: 'error', error: err.message })
+      }
+    }
+
+    res.json({ previews, totalAcl: ips.length })
+  } catch (err) {
+    console.error('Preview deploy error:', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+router.post('/deploy', async (req, res) => {
+  const logs = []
+  const log = (msg) => { logs.push(msg); console.log(`[ACL-DEPLOY] ${msg}`) }
+
+  try {
+    const sshSettings = await getSshSettings()
+    const hosts = (sshSettings.dnsdist_ssh_host || '').split(',').map(h => h.trim()).filter(Boolean)
+    const port = sshSettings.dnsdist_ssh_port || '22'
+    const user = sshSettings.dnsdist_ssh_user || 'root'
+    const keyPath = sshSettings.dnsdist_ssh_key_path || '/root/.ssh/id_rsa'
+
+    log(`SSH settings loaded: hosts=${hosts.join(',')}, port=${port}, user=${user}, key=${keyPath}`)
+
+    if (hosts.length === 0) {
+      log('ERROR: No SSH hosts configured')
+      return res.status(400).json({ error: 'SSH hosts not configured. Go to Settings first.', logs })
+    }
+
     // Ambil semua enabled whitelist dari database
     const result = await pool.query(`
       SELECT ip_or_subnet FROM acl_entries
-      WHERE enabled = true AND type = 'whitelist'
       ORDER BY ip_or_subnet ASC
     `)
 
     const ips = result.rows.map(r => r.ip_or_subnet)
+    log(`Loaded ${ips.length} ACL entries from database`)
+
     if (ips.length === 0) {
-      return res.status(400).json({ error: 'No enabled whitelist entries to deploy' })
+      log('ERROR: No whitelist entries to deploy')
+      return res.status(400).json({ error: 'No ACL entries to deploy', logs })
     }
 
     const aclIps = ips.map(ip => `  "${ip}"`)
     const deployResults = []
 
     for (const host of hosts) {
+      log(`\n=== Processing host: ${host} ===`)
       const ssh = new NodeSSH()
       try {
+        log(`Connecting to ${host}:${port} as ${user}...`)
         const config = await readDnsdistConfig(ssh, host, port, user, keyPath)
-        let newConfig = config.replace(/^\s*setACL\(\{[\s\S]*?^\}\)\n?/m, '')
-        newConfig = newConfig.trimEnd() + `\n\n-- ACL managed by DashDNS\nsetACL({\n${aclIps.join(',\n')}\n})\n`
+        log(`Connected. Read existing config (${config.length} chars)`)
 
+        // Cek apakah setACL sudah ada
+        const hasExistingAcl = config.includes('setACL({')
+        log(`Existing setACL block found: ${hasExistingAcl}`)
+
+        let newConfig = generateNewConfig(config, ips)
+        log(`New config prepared (${newConfig.length} chars) with ${ips.length} ACL entries`)
+
+        log(`Deploying config to ${host}...`)
         const writeSsh = new NodeSSH()
-        await writeDnsdistConfig(writeSsh, host, port, user, keyPath, newConfig, ips)
+        const result = await writeDnsdistConfig(writeSsh, host, port, user, keyPath, newConfig, ips, log)
+        log(`Deploy success: active=${result.isActive}, verified=${result.verified}`)
 
         deployResults.push({ host, status: 'success' })
+        log(`✓ ${host} completed successfully`)
       } catch (err) {
         try { await ssh.dispose() } catch (_) {}
         let errorMsg = err.message
         if (err.message.includes('private key')) {
           errorMsg = 'SSH key not found. Generate: ssh-keygen -t rsa -b 4096, lalu copy ke Settings'
         }
+        log(`✗ ${host} FAILED: ${errorMsg}`)
         deployResults.push({ host, status: 'error', error: errorMsg })
       }
     }
 
     const ok = deployResults.filter(r => r.status === 'success').length
+    log(`\n=== Deploy complete: ${ok}/${hosts.length} servers successful ===`)
+
+    // Simpan last deploy timestamp
+    const now = new Date().toISOString()
+    await pool.query(`
+      INSERT INTO settings (key, value, updated_at) VALUES ('acl_last_deploy', $1, NOW())
+      ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()
+    `, [now])
 
     res.json({
       status: ok === hosts.length ? 'success' : 'partial',
       message: `Deployed ${ips.length} ACL entries to ${ok}/${hosts.length} servers`,
-      details: deployResults
+      lastDeploy: now,
+      details: deployResults,
+      logs
     })
 
   } catch (err) {
     console.error('Deploy ACL error:', err)
-    res.status(500).json({ error: `Deploy failed: ${err.message}` })
+    log(`FATAL: ${err.message}`)
+    res.status(500).json({ error: `Deploy failed: ${err.message}`, logs })
   }
 })
 
@@ -309,6 +467,16 @@ router.post('/sync', async (req, res) => {
   } catch (err) {
     console.error('Sync ACL error:', err)
     res.status(500).json({ error: `Sync failed: ${err.message}` })
+  }
+})
+
+// GET /api/acl/last-deploy - Waktu deploy terakhir
+router.get('/last-deploy', async (req, res) => {
+  try {
+    const result = await pool.query("SELECT value FROM settings WHERE key = 'acl_last_deploy'")
+    res.json({ lastDeploy: result.rows[0]?.value || null })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
   }
 })
 

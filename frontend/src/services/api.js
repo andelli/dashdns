@@ -113,8 +113,14 @@ export const exportAclConfig = () =>
 export const deployAcl = () =>
   api.post('/acl/deploy')
 
+export const previewDeploy = () =>
+  api.post('/acl/preview-deploy')
+
 export const syncAcl = () =>
   api.post('/acl/sync')
+
+export const getLastDeploy = () =>
+  api.get('/acl/last-deploy')
 
 // Settings
 export const getSettings = () =>

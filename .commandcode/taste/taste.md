@@ -23,6 +23,16 @@
 # ssh
 - Use SSH public key authentication (not password) for connecting to remote servers. Confidence: 0.75
 - Prefix SSH commands with `sudo` when writing config files or restarting services on remote servers. Confidence: 0.65
+- Use `sudo systemctl restart dnsdist` instead of `reload-or-restart` since reload doesn't work on the target server. Confidence: 0.70
 
 # configuration
 - Manage dnsdist SSH server settings (host, port, user, key path) from the dashboard UI instead of via .env file. Confidence: 0.70
+
+# logging
+- Add detailed execution logs to deploy operations so users can see what steps were executed. Confidence: 0.70
+
+# deployment
+- For DashDNS ACL deploys: Show a diff preview of config changes to the user before submitting the actual deploy. Confidence: 0.80
+
+# acl
+- For DashDNS: Simplify ACL page by removing blacklist, enable/disable controls — user only uses whitelist entries. Confidence: 0.75
