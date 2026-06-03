@@ -220,8 +220,8 @@ export default function LookupPage() {
       {result && (
         <div className="lk-results" ref={resultRef}>
 
-          {/* Error global */}
-          {result.error && !result.answers && !result.results && (
+          {/* Error — single mode */}
+          {result.error && result.answers?.length === 0 && !result.results && (
             <div className="lk-error-card">
               <div className="lk-error-icon">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -236,7 +236,7 @@ export default function LookupPage() {
           )}
 
           {/* Single result */}
-          {result.answers && !result.results && (
+          {result.answers && result.answers.length > 0 && !result.results && (
             <>
               <div className="lk-meta-bar">
                 <div className="lk-meta-item">

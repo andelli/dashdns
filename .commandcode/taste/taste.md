@@ -27,6 +27,7 @@
 
 # configuration
 - Manage dnsdist SSH server settings (host, port, user, key path) from the dashboard UI instead of via .env file. Confidence: 0.70
+- Manage dnsdist API key from the dashboard settings UI instead of via .env file. Confidence: 0.60
 
 # logging
 - Add detailed execution logs to deploy operations so users can see what steps were executed. Confidence: 0.70
