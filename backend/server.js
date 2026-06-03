@@ -27,6 +27,7 @@ app.use('/api/servers', require('./routes/servers'))
 app.use('/api/lookup', require('./routes/lookup'))
 app.use('/api/acl', require('./routes/acl'))
 app.use('/api/settings', require('./routes/settings'))
+app.use('/api/top', require('./routes/top'))
 
 // SPA fallback - serve index.html for non-API routes
 app.get('/{*splat}', (req, res) => {

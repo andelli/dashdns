@@ -1,0 +1,221 @@
+.top-page {
+  max-width: 1200px;
+}
+
+/* Server selector */
+.top-selector {
+  display: flex;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.top-server-btn {
+  padding: 8px 20px;
+  background: var(--color-surface-card);
+  color: var(--color-body);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.top-server-btn:hover {
+  border-color: var(--color-hairline-strong);
+  color: var(--color-body-strong);
+}
+.top-server-btn.active {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-color: var(--color-primary);
+}
+
+/* Tabs */
+.top-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: var(--space-lg);
+  background: var(--color-surface-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-hairline);
+  overflow: hidden;
+  width: fit-content;
+}
+
+.top-tab {
+  padding: 10px 24px;
+  background: transparent;
+  color: var(--color-muted);
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.top-tab:hover {
+  color: var(--color-body-strong);
+}
+.top-tab.active {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+/* Table card */
+.top-table-card {
+  background: var(--color-surface-card);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-hairline);
+  overflow: hidden;
+}
+
+.top-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-base) var(--space-lg);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.top-table-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.top-table-sub {
+  font-size: 13px;
+  color: var(--color-muted-soft);
+}
+
+.top-table-wrap {
+  overflow-x: auto;
+}
+
+.top-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.top-table thead th {
+  text-align: left;
+  padding: var(--space-sm) var(--space-lg);
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.88px;
+  border-bottom: 1px solid var(--color-hairline);
+  white-space: nowrap;
+}
+
+.top-table tbody td {
+  padding: var(--space-sm) var(--space-lg);
+  border-bottom: 1px solid var(--color-hairline-soft);
+  color: var(--color-body);
+  font-size: 14px;
+}
+
+.top-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.top-table tbody tr:hover {
+  background: var(--color-surface-card-elevated);
+}
+
+.rank-cell {
+  font-weight: 600;
+  color: var(--color-muted-soft);
+  width: 40px;
+}
+
+.pct-cell {
+  width: 200px;
+}
+
+.pct-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.pct-bar {
+  height: 20px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent-violet));
+  min-width: 4px;
+  transition: width 0.3s;
+}
+
+.pct-bar-wrap span {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-body-strong);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.domain-cell {
+  font-weight: 500;
+  color: var(--color-body-strong);
+  word-break: break-all;
+}
+
+.domain-cell.mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.type-cell {
+  width: 80px;
+}
+
+.top-type {
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 7, 205, 0.1);
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* Error state */
+.top-page .error {
+  background: var(--color-surface-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  border: 1px solid rgba(255, 77, 77, 0.25);
+  color: var(--color-error);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .top-table thead th,
+  .top-table tbody td {
+    padding: var(--space-xs) var(--space-base);
+  }
+
+  .pct-cell {
+    width: 140px;
+  }
+
+  .top-table-card {
+    border-radius: var(--radius-lg);
+  }
+
+  .top-tabs {
+    width: 100%;
+  }
+
+  .top-tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 12px;
+  }
+}

@@ -108,6 +108,13 @@ export default function Layout() {
             <span className="nav-icon">⚙️</span>
             <span>Settings</span>
           </Link>
+
+          <div className="nav-section-label">Resolver</div>
+
+          <Link to="/top" className={`nav-item ${isActive('/top') ? 'active' : ''}`}>
+            <span className="nav-icon">📈</span>
+            <span>Insights</span>
+          </Link>
         </nav>
 
         <div className="sidebar-footer">

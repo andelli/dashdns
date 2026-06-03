@@ -132,4 +132,11 @@ export const updateSettings = (data) =>
 export const testSsh = (data) =>
   api.post('/settings/test-ssh', data)
 
+// Top Queries / Top Remotes
+export const getTopResolvers = () =>
+  api.get('/top')
+
+export const getResolverTopData = (resolverId) =>
+  api.get(`/top/${resolverId}`)
+
 export default api

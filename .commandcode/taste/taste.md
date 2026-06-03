@@ -44,3 +44,4 @@
 
 # deployment
 - For DashDNS: Do not use a reverse proxy (Nginx/Apache) - serve DashDNS directly on its port. Confidence: 0.65
+- For recursor-exporter: Deploy pre-compiled binary instead of building on target servers to avoid needing Go compiler on resolvers. Confidence: 0.50

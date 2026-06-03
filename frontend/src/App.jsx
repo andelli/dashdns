@@ -7,6 +7,7 @@ import DnsdistPage from './pages/DnsdistPage'
 import ResolverPage from './pages/ResolverPage'
 import ServerDetailPage from './pages/ServerDetailPage'
 import LookupPage from './pages/LookupPage'
+import TopPage from './pages/TopPage'
 import AclPage from './pages/AclPage'
 import DomainWhitelistPage from './pages/DomainWhitelistPage'
 import SettingsPage from './pages/SettingsPage'
@@ -55,6 +56,7 @@ function AppRoutes() {
         <Route path="/dnsdist/:id" element={<ServerDetailPage />} />
         <Route path="/resolvers/:id" element={<ServerDetailPage />} />
         <Route path="/lookup" element={<LookupPage />} />
+        <Route path="/top" element={<TopPage />} />
         <Route path="/acl" element={<AclPage />} />
         <Route path="/domains" element={<DomainWhitelistPage />} />
         <Route path="/settings" element={<SettingsPage />} />
