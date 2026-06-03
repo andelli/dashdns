@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"os/exec"
 	"strconv"
@@ -69,73 +70,76 @@ func getMetrics() map[string]interface{} {
 	return metrics
 }
 
-func getTopQueries() []interface{} {
-	cmd := exec.Command("rec_control", "top-queries")
+// parseTopOutput runs rec_control <cmd> and parses:
+//   "Over last <N> entries:" header
+//   "<pct>%   <value>" lines per entry
+// Returns totalEntries, and a slice of map containing percentage + raw count + value.
+func parseTopOutput(cmdName string) (int, []interface{}) {
+	cmd := exec.Command("rec_control", cmdName)
 	out, err := cmd.Output()
 	if err != nil {
-		return []interface{}{map[string]string{"error": err.Error()}}
+		return 0, []interface{}{map[string]string{"error": err.Error()}}
 	}
 
 	result := []interface{}{}
+	totalEntries := 0
 	scanner := bufio.NewScanner(strings.NewReader(string(out)))
 
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.Contains(line, "entries:") || strings.Contains(line, "rest") {
+		if line == "" {
 			continue
 		}
 
-		parts := strings.Fields(line)
-		if len(parts) < 2 {
+		// Parse "Over last 12500 entries:" header
+		if strings.Contains(line, "entries:") && strings.Contains(line, "Over last") {
+			parts := strings.Fields(line)
+			if len(parts) >= 3 {
+				totalEntries, _ = strconv.Atoi(parts[2])
+			}
 			continue
 		}
 
-		percentageStr := strings.TrimSuffix(parts[0], "%")
-		percentage, _ := strconv.ParseFloat(percentageStr, 64)
+		// Skip "rest" line
+		if strings.Contains(line, "rest") {
+			continue
+		}
 
-		// The rest of the line is "domain|TYPE"
-		query := strings.Join(parts[1:], " ")
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
 
-		result = append(result, map[string]interface{}{
-			"percentage": percentage,
-			"query":      query,
-		})
+		pctStr := strings.TrimSuffix(fields[0], "%")
+		pct, _ := strconv.ParseFloat(pctStr, 64)
+
+		count := int(math.Round(pct * float64(totalEntries) / 100.0))
+
+		if cmdName == "top-queries" {
+			query := strings.Join(fields[1:], " ")
+			result = append(result, map[string]interface{}{
+				"percentage": pct,
+				"count":      count,
+				"query":      query,
+			})
+		} else {
+			result = append(result, map[string]interface{}{
+				"percentage": pct,
+				"count":      count,
+				"ip":         fields[1],
+			})
+		}
 	}
 
-	return result
+	return totalEntries, result
 }
 
-func getTopRemotes() []interface{} {
-	cmd := exec.Command("rec_control", "top-remotes")
-	out, err := cmd.Output()
-	if err != nil {
-		return []interface{}{map[string]string{"error": err.Error()}}
-	}
+func getTopQueries() (int, []interface{}) {
+	return parseTopOutput("top-queries")
+}
 
-	result := []interface{}{}
-	scanner := bufio.NewScanner(strings.NewReader(string(out)))
-
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.Contains(line, "entries:") || strings.Contains(line, "rest") {
-			continue
-		}
-
-		parts := strings.Fields(line)
-		if len(parts) < 2 {
-			continue
-		}
-
-		percentageStr := strings.TrimSuffix(parts[0], "%")
-		percentage, _ := strconv.ParseFloat(percentageStr, 64)
-
-		result = append(result, map[string]interface{}{
-			"percentage": percentage,
-			"ip":         parts[1],
-		})
-	}
-
-	return result
+func getTopRemotes() (int, []interface{}) {
+	return parseTopOutput("top-remotes")
 }
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {
@@ -143,8 +147,14 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	metrics := getMetrics()
-	metrics["top_queries"] = getTopQueries()
-	metrics["top_remotes"] = getTopRemotes()
+
+	qEntries, qData := getTopQueries()
+	rEntries, rData := getTopRemotes()
+
+	metrics["top_queries_total_entries"] = qEntries
+	metrics["top_queries"] = qData
+	metrics["top_remotes_total_entries"] = rEntries
+	metrics["top_remotes"] = rData
 
 	json.NewEncoder(w).Encode(metrics)
 }

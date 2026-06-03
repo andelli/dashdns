@@ -169,6 +169,13 @@
   font-size: 13px;
 }
 
+.count-cell {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-body-strong);
+}
+
 .type-cell {
   width: 80px;
 }

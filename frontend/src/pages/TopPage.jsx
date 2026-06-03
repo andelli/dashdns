@@ -69,7 +69,7 @@ export default function TopPage() {
         <div className="top-table-card">
           <div className="top-table-header">
             <span className="top-table-title">Top Domains — {selectedResolver?.hostname}</span>
-            <span className="top-table-sub">{data.top_queries.length} entries</span>
+            <span className="top-table-sub">{data.top_queries_total_entries?.toLocaleString()} total — {data.top_queries.length} entries shown</span>
           </div>
           <div className="top-table-wrap">
             <table className="top-table">
@@ -77,6 +77,7 @@ export default function TopPage() {
                 <tr>
                   <th>#</th>
                   <th>Persentase</th>
+                  <th>Hits</th>
                   <th>Domain</th>
                   <th>Tipe</th>
                 </tr>
@@ -93,6 +94,7 @@ export default function TopPage() {
                           <span>{q.percentage.toFixed(2)}%</span>
                         </div>
                       </td>
+                      <td className="count-cell">{q.count?.toLocaleString() || '—'}</td>
                       <td className="domain-cell">{parts[0] || q.query}</td>
                       <td className="type-cell">{parts[1] ? <span className="top-type">{parts[1]}</span> : '—'}</td>
                     </tr>
@@ -108,7 +110,7 @@ export default function TopPage() {
         <div className="top-table-card">
           <div className="top-table-header">
             <span className="top-table-title">Top Remotes — {selectedResolver?.hostname}</span>
-            <span className="top-table-sub">{data.top_remotes.length} entries</span>
+            <span className="top-table-sub">{data.top_remotes_total_entries?.toLocaleString()} total — {data.top_remotes.length} entries shown</span>
           </div>
           <div className="top-table-wrap">
             <table className="top-table">
@@ -116,6 +118,7 @@ export default function TopPage() {
                 <tr>
                   <th>#</th>
                   <th>Persentase</th>
+                  <th>Hits</th>
                   <th>IP Address</th>
                 </tr>
               </thead>
@@ -129,6 +132,7 @@ export default function TopPage() {
                         <span>{r.percentage.toFixed(2)}%</span>
                       </div>
                     </td>
+                    <td className="count-cell">{r.count?.toLocaleString() || '—'}</td>
                     <td className="domain-cell mono">{r.ip}</td>
                   </tr>
                 ))}
