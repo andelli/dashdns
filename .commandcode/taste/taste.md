@@ -50,3 +50,4 @@
 - To check resolver health: Query the recursor-exporter API on port 9000 for status, questions/hits, top queries, and top remotes. Confidence: 0.65
 - Prefer computing derived data (counts, stats) on the frontend/dashboard side rather than deploying updates to multiple remote resolvers. Confidence: 0.60
 - For resolver top data: `rec_control top-queries` and `top-remotes` use a fixed sample of "Over last 12500 entries" — use this fixed total to compute absolute counts from percentages. Confidence: 0.70
+- In DNS Lookup page, do not auto-select resolver servers as lookup targets — only dnsdist servers should be selected by default. Confidence: 0.65

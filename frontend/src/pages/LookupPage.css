@@ -141,7 +141,7 @@
 /* ── Server layout ── */
 .lk-server-cols {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: var(--space-lg);
 }
 .lk-server-col {
@@ -176,9 +176,15 @@
   color: var(--color-body-strong);
   background: var(--color-surface-card-elevated);
 }
+.lk-col-resolver {
+  padding-left: var(--space-lg);
+}
 .lk-col-public {
   padding-left: var(--space-lg);
-  border-left: 1px solid var(--color-hairline-soft);
+}
+.lk-chip-resolver.on {
+  background: rgba(255, 159, 67, 0.10);
+  border-color: var(--color-accent-orange, #ff9f43);
 }
 .lk-col-note {
   font-size: 11px;
@@ -543,7 +549,11 @@
 
   .lk-col-public {
     padding-left: 0;
-    border-left: none;
+    padding-top: var(--space-base);
+    border-top: 1px solid var(--color-hairline-soft);
+  }
+  .lk-col-resolver {
+    padding-left: 0;
     padding-top: var(--space-base);
     border-top: 1px solid var(--color-hairline-soft);
   }

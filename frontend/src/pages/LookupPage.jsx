@@ -35,18 +35,26 @@ export default function LookupPage() {
   const [servers, setServers] = useState([])
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [resolverServers, setResolverServers] = useState([])
+  const [selectedResolvers, setSelectedResolvers] = useState([])
   const [selectedLocal, setSelectedLocal] = useState([])
   const [selectedPublic, setSelectedPublic] = useState([])
   const resultRef = useRef(null)
 
   const loadServers = useCallback(async () => {
     try {
-      const res = await api.getDnsdistServers()
-      const dnsdistServers = res.data.filter(s => s.queries !== null)
+      const [dnsdistRes, resolverRes] = await Promise.all([
+        api.getDnsdistServers(),
+        api.getResolverServers(),
+      ])
+      const dnsdistServers = dnsdistRes.data.filter(s => s.queries !== null)
       setServers(dnsdistServers)
       if (dnsdistServers.length > 0) {
         setSelectedLocal(dnsdistServers.map(s => s.ip))
       }
+
+      const rSl = resolverRes.data.filter(s => s.is_up)
+      setResolverServers(rSl)
     } catch (err) {
       console.error('Load servers error:', err)
     }
@@ -61,7 +69,7 @@ export default function LookupPage() {
     setResult(null)
 
     try {
-      const ips = [...selectedLocal, ...selectedPublic]
+      const ips = [...selectedLocal, ...selectedResolvers, ...selectedPublic]
       let res
       if (ips.length > 1) {
         res = await api.dnsLookupMulti(domain, queryType, ips)
@@ -91,13 +99,20 @@ export default function LookupPage() {
     )
   }
 
+  const toggleResolver = (ip) => {
+    setSelectedResolvers(prev =>
+      prev.includes(ip) ? prev.filter(s => s !== ip) : [...prev, ip]
+    )
+  }
+
   const typeMeta = QUERY_TYPES.find(t => t.value === queryType)
-  const totalSelected = selectedLocal.length + selectedPublic.length
+  const totalSelected = selectedLocal.length + selectedResolvers.length + selectedPublic.length
 
   const getServerName = (ip) => {
     const s = servers.find(s => s.ip === ip)
+    const rs = resolverServers.find(s => s.ip === ip)
     const pub = PUBLIC_DNS.find(d => d.ip === ip)
-    return pub ? pub.name : (s ? s.hostname : ip)
+    return pub ? pub.name : (s ? s.hostname : rs ? rs.hostname : ip)
   }
 
   return (
@@ -181,6 +196,32 @@ export default function LookupPage() {
                   </button>
                 ))}
                 {servers.length === 0 && <span className="lk-empty">Tidak ada server</span>}
+              </div>
+            </div>
+
+            {/* Resolver servers */}
+            <div className="lk-server-col lk-col-resolver">
+              <div className="lk-col-header">
+                <span className="lk-col-title">Resolver</span>
+                <div className="lk-col-actions">
+                  <button type="button" className="lk-act" onClick={() => setSelectedResolvers(resolverServers.map(s => s.ip))}>Semua</button>
+                  <button type="button" className="lk-act" onClick={() => setSelectedResolvers([])}>Reset</button>
+                </div>
+              </div>
+
+              <div className="lk-chips">
+                {resolverServers.map(s => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`lk-chip lk-chip-resolver ${selectedResolvers.includes(s.ip) ? 'on' : ''}`}
+                    onClick={() => toggleResolver(s.ip)}
+                  >
+                    <span className="lk-chip-name">{s.hostname}</span>
+                    <span className="lk-chip-ip">{s.ip}</span>
+                  </button>
+                ))}
+                {resolverServers.length === 0 && <span className="lk-empty">Tidak ada resolver online</span>}
               </div>
             </div>
 
