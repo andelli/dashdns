@@ -7,13 +7,18 @@ import './Dnsdist.css'
 
 export default function DnsdistPage() {
   const [servers, setServers] = useState([])
+  const [health, setHealth] = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   const loadData = async () => {
     try {
-      const res = await api.getDnsdistServers()
+      const [res, healthRes] = await Promise.all([
+        api.getDnsdistServers(),
+        api.getHealth()
+      ])
       setServers(res.data)
+      setHealth(healthRes.data)
     } catch (err) {
       console.error('Load dnsdist error:', err)
     } finally {
@@ -36,7 +41,6 @@ export default function DnsdistPage() {
     ? servers.reduce((sum, s) => sum + Number(s.cache_hit_ratio || 0), 0) / servers.length
     : 0
   const totalQueries = servers.reduce((sum, s) => sum + Number(s.queries || 0), 0)
-  const totalMemory = servers.reduce((sum, s) => sum + Number(s.memory || 0), 0)
 
   return (
     <div className="dnsdist-page">
@@ -58,6 +62,7 @@ export default function DnsdistPage() {
           servers={servers}
           type="dnsdist"
           onRowClick={(id) => navigate(`/dnsdist/${id}`)}
+          health={health}
         />
       </div>
     </div>

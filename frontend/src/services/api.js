@@ -139,4 +139,33 @@ export const getTopResolvers = () =>
 export const getResolverTopData = (resolverId) =>
   api.get(`/top/${resolverId}`)
 
+// Health Check
+export const getHealth = () =>
+  api.get('/health')
+
+// Domain Whitelist
+export const getDomainEntries = () =>
+  api.get('/domains')
+
+export const createDomainEntry = (data) =>
+  api.post('/domains', data)
+
+export const updateDomainEntry = (id, data) =>
+  api.put(`/domains/${id}`, data)
+
+export const deleteDomainEntry = (id) =>
+  api.delete(`/domains/${id}`)
+
+export const previewDomainDeploy = () =>
+  api.post('/domains/preview-deploy')
+
+export const deployDomain = () =>
+  api.post('/domains/deploy')
+
+export const syncDomainDnsdist = () =>
+  api.post('/domains/sync')
+
+export const getDomainLastDeploy = () =>
+  api.get('/domains/last-deploy')
+
 export default api

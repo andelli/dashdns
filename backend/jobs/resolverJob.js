@@ -82,12 +82,12 @@ async function collectResolver() {
 
       // Try custom /stats endpoint on port 9000
       const pdnsPort = 9000
-      const pdnsStats = await collectPdnsStats(server.ip, pdnsPort, server.api_key || process.env.DNSDIST_API_KEY)
+      const pdnsStats = await collectPdnsStats(server.ip, pdnsPort, server.api_key || process.env.RESOLVER_API_KEY)
       
       if (pdnsStats) {
         // Calculate deltas
         const lastRecord = await pool.query(`
-          SELECT queries, nxdomain, servfail, outgoing_timeouts FROM resolver_stats
+          SELECT queries, nxdomain, servfail, outgoing_timeouts, ts FROM resolver_stats
           WHERE server_id = $1 ORDER BY id DESC LIMIT 1
         `, [server.id])
 
@@ -95,7 +95,11 @@ async function collectResolver() {
           if (lastRecord.rows.length === 0) return 0
           const prev = Number(lastRecord.rows[0][field] || 0)
           const diff = Number(curr) - prev
-          return diff > 0 ? Math.round(diff / 10) : 0
+          if (diff <= 0) return 0
+          const elapsed = lastRecord.rows[0].ts
+            ? (now - new Date(lastRecord.rows[0].ts)) / 1000
+            : 10
+          return Math.round(diff / Math.max(elapsed, 1))
         }
 
         const queriesDelta = calcDelta(pdnsStats.queries, 'queries')

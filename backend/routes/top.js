@@ -42,7 +42,9 @@ router.get('/:resolverId', async (req, res) => {
     res.json({
       server: server.rows[0],
       top_queries: topQueries,
-      top_remotes: topRemotes
+      top_remotes: topRemotes,
+      top_queries_total_entries: response.data.top_queries_total_entries || 12500,
+      top_remotes_total_entries: response.data.top_remotes_total_entries || 12500
     })
   } catch (err) {
     console.error('Top data error:', err)

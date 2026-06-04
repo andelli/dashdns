@@ -11,20 +11,25 @@ export default function TopPage() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
+    let cancelled = false
     api.getTopResolvers().then(res => {
+      if (cancelled) return
       setResolvers(res.data)
       if (res.data.length > 0) setSelectedId(res.data[0].id)
     }).catch(() => {})
+    return () => { cancelled = true }
   }, [])
 
   useEffect(() => {
     if (!selectedId) return
+    let cancelled = false
     setLoading(true)
     setError(null)
     api.getResolverTopData(selectedId)
-      .then(res => setData(res.data))
-      .catch(err => setError(err.response?.data?.error || err.message))
-      .finally(() => setLoading(false))
+      .then(res => { if (!cancelled) setData(res.data) })
+      .catch(err => { if (!cancelled) setError(err.response?.data?.error || err.message) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
   }, [selectedId])
 
   const selectedResolver = resolvers.find(r => r.id === selectedId)

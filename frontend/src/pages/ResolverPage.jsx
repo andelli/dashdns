@@ -7,13 +7,18 @@ import './Dnsdist.css'
 
 export default function ResolverPage() {
   const [servers, setServers] = useState([])
+  const [health, setHealth] = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   const loadData = async () => {
     try {
-      const res = await api.getResolverServers()
+      const [res, healthRes] = await Promise.all([
+        api.getResolverServers(),
+        api.getHealth()
+      ])
       setServers(res.data)
+      setHealth(healthRes.data)
     } catch (err) {
       console.error('Load resolvers error:', err)
     } finally {
@@ -36,7 +41,6 @@ export default function ResolverPage() {
     ? servers.reduce((sum, s) => sum + Number(s.cache_hit_ratio || 0), 0) / servers.length
     : 0
   const totalQueries = servers.reduce((sum, s) => sum + Number(s.queries || 0), 0)
-  const totalMemory = servers.reduce((sum, s) => sum + Number(s.memory || 0), 0)
 
   return (
     <div className="resolver-page">
@@ -58,6 +62,7 @@ export default function ResolverPage() {
           servers={servers}
           type="resolver"
           onRowClick={(id) => navigate(`/resolvers/${id}`)}
+          health={health}
         />
       </div>
     </div>

@@ -1,3 +1,6 @@
+# port-status
+- For DashDNS port status display: Show only "up" or "down" status without latency (ms). Confidence: 0.80
+
 # cli
 - Use Bahasa Indonesia for all communications with the user. Confidence: 0.85
 - Use `git add -A` and `git commit --amend --no-edit` with `git push -f origin main` for commits. Confidence: 0.70

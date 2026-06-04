@@ -24,6 +24,7 @@ router.get('/', async (req, res) => {
         rs.cpu_user, rs.cpu_system,
         rs.concurrent_queries, rs.outgoing_timeouts,
         rs.dnssec_validations, rs.dnssec_bogus,
+        COALESCE(rs.is_up, false) as is_up,
         rs.ts
       FROM servers s
       LEFT JOIN LATERAL (
@@ -60,6 +61,7 @@ router.get('/:id', async (req, res) => {
         rs.cpu_user, rs.cpu_system,
         rs.concurrent_queries, rs.outgoing_timeouts,
         rs.dnssec_validations, rs.dnssec_bogus,
+        COALESCE(rs.is_up, false) as is_up,
         rs.ts
       FROM servers s
       LEFT JOIN LATERAL (
@@ -100,7 +102,7 @@ router.get('/:id/history', async (req, res) => {
         dnssec_validations, dnssec_bogus
       FROM resolver_stats
       WHERE server_id = $1
-        AND ts > NOW() - interval '${parseInt(minutes)} minutes'
+        AND ts > NOW() - $2::interval
       ORDER BY ts ASC
     `, [req.params.id])
     res.json(result.rows)

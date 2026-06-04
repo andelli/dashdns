@@ -46,6 +46,7 @@ router.get('/overview', async (req, res) => {
         rs.timeouts, rs.timeouts_delta,
         rs.queries, rs.cache_hits, rs.cache_misses,
         rs.concurrent_queries,
+        COALESCE(rs.is_up, false) as is_up,
         rs.ts
       FROM servers s
       LEFT JOIN LATERAL (
@@ -116,9 +117,9 @@ router.get('/qps', async (req, res) => {
         ds.ts
       FROM dnsdist_stats ds
       JOIN servers s ON s.id = ds.server_id
-      WHERE ds.ts > NOW() - interval '${parseInt(minutes)} minutes'
+      WHERE ds.ts > NOW() - $1::interval
       ORDER BY ds.ts ASC
-    `)
+    `, [`${parseInt(minutes)} minutes`])
 
     const resolverQps = await pool.query(`
       SELECT
@@ -127,9 +128,9 @@ router.get('/qps', async (req, res) => {
         rs.ts
       FROM resolver_stats rs
       JOIN servers s ON s.id = rs.server_id
-      WHERE rs.ts > NOW() - interval '${parseInt(minutes)} minutes'
+      WHERE rs.ts > NOW() - $1::interval
       ORDER BY rs.ts ASC
-    `)
+    `, [`${parseInt(minutes)} minutes`])
 
     res.json({
       dnsdist: dnsdistQps.rows,

@@ -18,7 +18,7 @@ async function collectDnsdist() {
 
       // Calculate QPS delta from previous record
       const lastRecord = await pool.query(`
-        SELECT queries, nxdomain, servfail, downstreams_timeout, acl_drops FROM dnsdist_stats
+        SELECT queries, nxdomain, servfail, downstreams_timeout, acl_drops, ts FROM dnsdist_stats
         WHERE server_id = $1
         ORDER BY id DESC LIMIT 1
       `, [server.id])
@@ -27,7 +27,12 @@ async function collectDnsdist() {
         if (lastRecord.rows.length === 0) return 0
         const prev = Number(lastRecord.rows[0][field] || 0)
         const diff = Number(curr) - prev
-        return diff > 0 ? Math.round(diff / 10) : 0
+        if (diff <= 0) return 0
+        // Use actual seconds elapsed between records
+        const elapsed = lastRecord.rows[0].ts
+          ? (now - new Date(lastRecord.rows[0].ts)) / 1000
+          : 10
+        return Math.round(diff / Math.max(elapsed, 1))
       }
 
       const queriesDelta = calcDelta(parsed.queries, 'queries')

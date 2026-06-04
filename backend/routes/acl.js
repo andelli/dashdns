@@ -151,7 +151,7 @@ async function readDnsdistConfig(ssh, host, port, user, keyPath) {
 }
 
 // Helper: deploy config ke dnsdist via SSH + reload + verifikasi
-async function writeDnsdistConfig(ssh, host, port, user, keyPath, config, expectedIps, logFn) {
+async function writeDnsdistConfig(ssh, host, port, user, keyPath, config, logFn) {
   await ssh.connect({ host, port: parseInt(port || '22'), username: user, privateKeyPath: keyPath, readyTimeout: 10000 })
   const log = logFn || ((msg) => console.log(`[ACL-DEPLOY] ${msg}`))
 
@@ -360,7 +360,7 @@ router.post('/deploy', async (req, res) => {
 
         log(`Deploying config to ${host}...`)
         const writeSsh = new NodeSSH()
-        const result = await writeDnsdistConfig(writeSsh, host, port, user, keyPath, newConfig, ips, log)
+        const result = await writeDnsdistConfig(writeSsh, host, port, user, keyPath, newConfig, log)
         log(`Deploy success: active=${result.isActive}, verified=${result.verified}`)
 
         deployResults.push({ host, status: 'success' })

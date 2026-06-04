@@ -25,7 +25,7 @@ const PUBLIC_DNS = [
 ]
 
 function formatMs(ms) {
-  if (ms < 1) return '<1ms'
+  if (ms == null || ms < 1) return '<1ms'
   return `${Math.round(ms)}ms`
 }
 

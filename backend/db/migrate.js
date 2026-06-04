@@ -125,6 +125,18 @@ async function migrate() {
       )
     `)
 
+    // Create domain_whitelist table
+    await pool.query(`
+      CREATE TABLE domain_whitelist (
+        id SERIAL PRIMARY KEY,
+        domain VARCHAR(255) NOT NULL,
+        description VARCHAR(255),
+        enabled BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `)
+
     // Create settings table
     await pool.query(`
       CREATE TABLE settings (

@@ -4,7 +4,6 @@ require('./db/postgres')
 
 const express = require('express')
 const cors = require('cors')
-const cron = require('node-cron')
 const path = require('path')
 
 const { collectDnsdist } = require('./jobs/dnsdistJob')
@@ -26,14 +25,13 @@ app.use('/api/resolvers', require('./routes/resolvers'))
 app.use('/api/servers', require('./routes/servers'))
 app.use('/api/lookup', require('./routes/lookup'))
 app.use('/api/acl', require('./routes/acl'))
+app.use('/api/domains', require('./routes/domains'))
 app.use('/api/settings', require('./routes/settings'))
 app.use('/api/top', require('./routes/top'))
+app.use('/api/health', require('./routes/health'))
 
 // SPA fallback - serve index.html for non-API routes
-app.get('/{*splat}', (req, res) => {
-  if (req.path.startsWith('/api')) {
-    return res.status(404).json({ error: 'Not found' })
-  }
+app.get(/^\/(?!api\/).*/, (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist/index.html'))
 })
 
@@ -43,13 +41,22 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`DashDNS API running on 0.0.0.0:${PORT}`)
 })
 
-// Run collectors every 10 seconds (start after 10s to avoid startup overlap)
+// Run collectors every 10 seconds with no overlap
+let collecting = false
 setTimeout(() => {
-  cron.schedule('*/10 * * * * *', async () => {
+  setInterval(async () => {
+    if (collecting) return
+    collecting = true
     console.log('[Collector] Running...')
-    await Promise.all([
-      collectDnsdist(),
-      collectResolver()
-    ])
-  })
+    try {
+      await Promise.all([
+        collectDnsdist(),
+        collectResolver()
+      ])
+    } catch (err) {
+      console.error('[Collector] Error:', err.message)
+    } finally {
+      collecting = false
+    }
+  }, 10000)
 }, 10000)

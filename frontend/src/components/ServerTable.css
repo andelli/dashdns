@@ -93,6 +93,25 @@
   font-weight: 500;
 }
 
+.port-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.port-badge.port-ok {
+  background: rgba(51, 209, 122, 0.12);
+  color: var(--color-success, #33d17a);
+}
+
+.port-badge.port-down {
+  background: rgba(255, 77, 77, 0.12);
+  color: var(--color-error, #ff4d4d);
+}
+
 .table-empty {
   text-align: center;
   padding: var(--space-xl);

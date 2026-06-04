@@ -11,17 +11,20 @@ import './Dashboard.css'
 export default function DashboardPage() {
   const [overview, setOverview] = useState(null)
   const [qpsData, setQpsData] = useState(null)
+  const [health, setHealth] = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   const loadData = async () => {
     try {
-      const [overviewRes, qpsRes] = await Promise.all([
+      const [overviewRes, qpsRes, healthRes] = await Promise.all([
         api.getOverview(),
-        api.getQpsHistory(60)
+        api.getQpsHistory(60),
+        api.getHealth()
       ])
       setOverview(overviewRes.data)
       setQpsData(qpsRes.data)
+      setHealth(healthRes.data)
     } catch (err) {
       console.error('Dashboard load error:', err)
     } finally {
@@ -44,9 +47,8 @@ export default function DashboardPage() {
   }
 
   const { totals, dnsdist, resolvers } = overview
-  const allServers = [...dnsdist, ...resolvers]
-  const offlineServers = allServers.filter(s => !s.qps && s.qps !== 0 && s.ts === null)
-  const onlineCount = allServers.length - offlineServers.length
+  const offlineCount = dnsdist.filter(s => s.qps === null || s.qps === undefined).length
+    + resolvers.filter(s => !s.is_up).length
 
   const dnsdistQps = dnsdist.reduce((sum, s) => sum + Number(s.qps || 0), 0)
   const dnsdistCache = dnsdist.length > 0
@@ -74,9 +76,9 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {offlineServers.length > 0 && (
-        <div className="health-alert">
-          ⚠️ {offlineServers.length} server{offlineServers.length > 1 ? 's' : ''} offline — {onlineCount} of {allServers.length} operational
+      {offlineCount > 0 && (
+        <div className="health-alert-compact">
+          ⚠️ {offlineCount} server{offlineCount !== 1 ? 's' : ''} offline
         </div>
       )}
 
@@ -111,13 +113,11 @@ export default function DashboardPage() {
         <StatsCard title="ACL Drop/s" value={dnsdistAclDrop.toLocaleString()} icon="🛡️" color="#7b3aed" subtitle="Rate" />
       </div>
 
-      <div className="status-grid">
-        <ServerStatusIndicator servers={dnsdist} type="dnsdist" />
-      </div>
+      <ServerStatusIndicator servers={dnsdist} type="dnsdist" />
 
       <div className="table-card">
         <h3>dnsdist Servers</h3>
-        <ServerTable servers={dnsdist} type="dnsdist" onRowClick={(id) => navigate(`/dnsdist/${id}`)} />
+        <ServerTable servers={dnsdist} type="dnsdist" onRowClick={(id) => navigate(`/dnsdist/${id}`)} health={health} />
       </div>
 
       <div className="section-label">
@@ -131,13 +131,11 @@ export default function DashboardPage() {
         <StatsCard title="Latency" value={`${resolverLatency.toFixed(1)} ms`} icon="📡" color="#00d4ff" subtitle="Average" />
       </div>
 
-      <div className="status-grid">
-        <ServerStatusIndicator servers={resolvers} type="resolver" />
-      </div>
+      <ServerStatusIndicator servers={resolvers} type="resolver" />
 
       <div className="table-card">
         <h3>Resolver Servers</h3>
-        <ServerTable servers={resolvers} type="resolver" onRowClick={(id) => navigate(`/resolvers/${id}`)} />
+        <ServerTable servers={resolvers} type="resolver" onRowClick={(id) => navigate(`/resolvers/${id}`)} health={health} />
       </div>
     </div>
   )

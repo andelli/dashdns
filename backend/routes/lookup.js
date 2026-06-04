@@ -5,11 +5,6 @@ const { authenticateToken } = require('../middleware/auth')
 
 router.use(authenticateToken)
 
-function formatAddress(addr) {
-  if (typeof addr === 'object' && addr !== null) return addr
-  return { value: String(addr) }
-}
-
 function annotateAnswer(answer, queryType) {
   if (!answer || typeof answer !== 'object') {
     return { value: String(answer || '') }

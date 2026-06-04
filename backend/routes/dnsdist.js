@@ -94,9 +94,9 @@ router.get('/:id/history', async (req, res) => {
         downstreams_timeout, acl_drops
       FROM dnsdist_stats
       WHERE server_id = $1
-        AND ts > NOW() - interval '${parseInt(minutes)} minutes'
+        AND ts > NOW() - $2::interval
       ORDER BY ts ASC
-    `, [req.params.id])
+    `, [req.params.id, `${parseInt(minutes)} minutes`])
     res.json(result.rows)
   } catch (err) {
     console.error('Dnsdist history error:', err)

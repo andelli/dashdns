@@ -1,6 +1,6 @@
 import './ServerTable.css'
 
-export default function ServerTable({ servers, type, onRowClick }) {
+export default function ServerTable({ servers, type, onRowClick, health }) {
   if (!servers || servers.length === 0) {
     return <div className="table-empty">No servers found</div>
   }
@@ -14,6 +14,14 @@ export default function ServerTable({ servers, type, onRowClick }) {
 
   const isDnsdist = type === 'dnsdist'
 
+  const portStatus = (ip, portName) => {
+    const h = health?.find(h => h.ip === ip)
+    if (!h) return null
+    const p = h[portName]
+    if (!p) return null
+    return p.up ? { label: 'up', cls: 'port-ok' } : { label: 'down', cls: 'port-down' }
+  }
+
   return (
     <div className="server-table-wrapper">
       <table className="server-table">
@@ -21,6 +29,8 @@ export default function ServerTable({ servers, type, onRowClick }) {
           <tr>
             <th>Hostname</th>
             <th>IP</th>
+            <th>DNS</th>
+            <th>API</th>
             <th>QPS</th>
             <th>Cache Hit</th>
             <th>Queries</th>
@@ -33,17 +43,22 @@ export default function ServerTable({ servers, type, onRowClick }) {
           </tr>
         </thead>
         <tbody>
-          {servers.map(server => (
+          {servers.map(server => {
+            const dns = portStatus(server.ip, 'dns')
+            const api = portStatus(server.ip, 'api')
+            return (
             <tr
               key={server.id}
               onClick={() => onRowClick?.(server.id)}
               className="clickable-row"
             >
               <td className="hostname-cell">
-                <span className={`status-dot ${server.qps !== null ? 'online' : 'offline'}`} />
+                <span className={`status-dot ${isDnsdist ? (server.qps !== null ? 'online' : 'offline') : (server.is_up ? 'online' : 'offline')}`} />
                 {server.hostname}
               </td>
               <td className="ip-cell">{server.ip}</td>
+              <td><span className={`port-badge ${dns?.cls || ''}`}>{dns?.label || '—'}</span></td>
+              <td><span className={`port-badge ${api?.cls || ''}`}>{api?.label || '—'}</span></td>
               <td className="qps-cell">
                 <strong>{Number(server.qps || 0).toLocaleString()}</strong>
               </td>
@@ -69,7 +84,8 @@ export default function ServerTable({ servers, type, onRowClick }) {
               <td>{Number(server.latency_avg || 0).toFixed(1)} ms</td>
               <td>{formatBytes(Number(server.memory || 0))}</td>
             </tr>
-          ))}
+            )
+          })}
         </tbody>
       </table>
     </div>
