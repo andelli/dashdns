@@ -126,9 +126,39 @@ export default function QpsChart({ data, height = '350px' }) {
     }))
   ]
 
-  const allTimes = [
-    ...Object.values(dnsdistSeries)[0]?.times || [],
-    ...Object.values(resolverSeries)[0]?.times || []
+  // Build unified timeline from all unique timestamps
+  const allTimestamps = new Set()
+  Object.values(dnsdistSeries).forEach(s => s.times.forEach(t => allTimestamps.add(t)))
+  Object.values(resolverSeries).forEach(s => s.times.forEach(t => allTimestamps.add(t)))
+  const allTimes = [...allTimestamps].sort((a, b) => {
+    const [ah, am, as] = a.split(':').map(Number)
+    const [bh, bm, bs] = b.split(':').map(Number)
+    return ah*3600+am*60+as - (bh*3600+bm*60+bs)
+  })
+
+  const mapToTimeline = (series) => {
+    return allTimes.map(t => {
+      const idx = series.times.indexOf(t)
+      return idx !== -1 ? series.values[idx] : null
+    })
+  }
+
+  // Rebuild series with aligned timeline
+  const alignedSeries = [
+    ...Object.entries(dnsdistSeries).map(([name, d], i) => ({
+      name, type: 'line', smooth: true, symbol: 'none',
+      data: mapToTimeline(d),
+      lineStyle: { width: isSmall ? 1.5 : 2, color: COLORS[i % COLORS.length] },
+      areaStyle: { opacity: 0.08 },
+      connectNulls: true
+    })),
+    ...Object.entries(resolverSeries).map(([name, d], i) => ({
+      name, type: 'line', smooth: true, symbol: 'none',
+      data: mapToTimeline(d),
+      lineStyle: { width: isSmall ? 1.5 : 2, type: 'dashed', color: COLORS[(i + Object.keys(dnsdistSeries).length) % COLORS.length] },
+      areaStyle: { opacity: 0.04 },
+      connectNulls: true
+    }))
   ]
 
   const option = {
@@ -165,7 +195,7 @@ export default function QpsChart({ data, height = '350px' }) {
       axisLabel: { fontSize: isSmall ? 9 : 11, color: colors.axisLabel },
       splitLine: { lineStyle: { color: colors.splitLine, type: 'dashed' } }
     },
-    series: allSeries
+    series: alignedSeries
   }
 
   return <ReactECharts ref={chartRef} option={option} style={{ height }} />
