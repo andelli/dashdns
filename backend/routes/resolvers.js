@@ -104,7 +104,7 @@ router.get('/:id/history', async (req, res) => {
       WHERE server_id = $1
         AND ts > NOW() - $2::interval
       ORDER BY ts ASC
-    `, [req.params.id])
+    `, [req.params.id, `${minutes} minutes`])
     res.json(result.rows)
   } catch (err) {
     console.error('Resolver history error:', err)
