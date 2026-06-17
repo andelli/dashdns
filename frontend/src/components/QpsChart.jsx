@@ -87,54 +87,52 @@ export default function QpsChart({ data, height = '350px' }) {
     return <ReactECharts ref={chartRef} option={option} style={{ height }} />
   }
 
-  // Multi-server mode
+  // Multi-server mode — bucket per minute for alignment
   const dnsdistSeries = {}
   const resolverSeries = {}
 
-  if (data.dnsdist) {
-    data.dnsdist.forEach(item => {
-      if (!dnsdistSeries[item.hostname]) {
-        dnsdistSeries[item.hostname] = { times: [], values: [] }
-      }
-      dnsdistSeries[item.hostname].times.push(item.ts ? new Date(item.ts).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '')
-      dnsdistSeries[item.hostname].values.push(Number(item.qps) || 0)
-    })
+  const fmtWIB = (ts) => {
+    const d = new Date(ts)
+    const wib = new Date(d.getTime() + 7 * 60 * 60 * 1000)
+    const hh = String(wib.getUTCHours()).padStart(2, '0')
+    const mm = String(wib.getUTCMinutes()).padStart(2, '0')
+    return `${hh}:${mm}`
   }
 
-  if (data.resolvers) {
-    data.resolvers.forEach(item => {
-      if (!resolverSeries[item.hostname]) {
-        resolverSeries[item.hostname] = { times: [], values: [] }
-      }
-      resolverSeries[item.hostname].times.push(item.ts ? new Date(item.ts).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '')
-      resolverSeries[item.hostname].values.push(Number(item.qps) || 0)
+  const bucketByMin = (items, store) => {
+    ;(items || []).forEach(item => {
+      if (!item.ts) return
+      const min = fmtWIB(item.ts) // "HH:MM" dalam WIB
+      if (!store[item.hostname]) store[item.hostname] = {}
+      store[item.hostname][min] = (store[item.hostname][min] || 0) + (Number(item.qps) || 0)
     })
   }
+  bucketByMin(data.dnsdist, dnsdistSeries)
+  bucketByMin(data.resolvers, resolverSeries)
 
-  const legendData = [...Object.keys(dnsdistSeries), ...Object.keys(resolverSeries)]
+  // Flatten: { hostname: { "HH:MM": qps } } -> { hostname: { times: [], values: [] } }
+  const flatten = (obj) => {
+    const result = {}
+    Object.entries(obj).forEach(([name, buckets]) => {
+      result[name] = { times: [], values: [] }
+      Object.entries(buckets).sort(([a], [b]) => a.localeCompare(b)).forEach(([min, qps]) => {
+        result[name].times.push(min)
+        result[name].values.push(qps)
+      })
+    })
+    return result
+  }
 
-  const allSeries = [
-    ...Object.entries(dnsdistSeries).map(([name, d], i) => ({
-      name, type: 'line', smooth: true, symbol: 'none', data: d.values,
-      lineStyle: { width: isSmall ? 1.5 : 2, color: COLORS[i % COLORS.length] },
-      areaStyle: { opacity: 0.08 }
-    })),
-    ...Object.entries(resolverSeries).map(([name, d], i) => ({
-      name, type: 'line', smooth: true, symbol: 'none', data: d.values,
-      lineStyle: { width: isSmall ? 1.5 : 2, type: 'dashed', color: COLORS[(i + Object.keys(dnsdistSeries).length) % COLORS.length] },
-      areaStyle: { opacity: 0.04 }
-    }))
-  ]
+  const dnsdistFlat = flatten(dnsdistSeries)
+  const resolverFlat = flatten(resolverSeries)
 
-  // Build unified timeline from all unique timestamps
+  const legendData = [...Object.keys(dnsdistFlat), ...Object.keys(resolverFlat)]
+
+  // Build unified timeline from all unique minute buckets
   const allTimestamps = new Set()
-  Object.values(dnsdistSeries).forEach(s => s.times.forEach(t => allTimestamps.add(t)))
-  Object.values(resolverSeries).forEach(s => s.times.forEach(t => allTimestamps.add(t)))
-  const allTimes = [...allTimestamps].sort((a, b) => {
-    const [ah, am, as] = a.split(':').map(Number)
-    const [bh, bm, bs] = b.split(':').map(Number)
-    return ah*3600+am*60+as - (bh*3600+bm*60+bs)
-  })
+  Object.values(dnsdistFlat).forEach(s => s.times.forEach(t => allTimestamps.add(t)))
+  Object.values(resolverFlat).forEach(s => s.times.forEach(t => allTimestamps.add(t)))
+  const allTimes = [...allTimestamps].sort()
 
   const mapToTimeline = (series) => {
     return allTimes.map(t => {
@@ -143,19 +141,18 @@ export default function QpsChart({ data, height = '350px' }) {
     })
   }
 
-  // Rebuild series with aligned timeline
   const alignedSeries = [
-    ...Object.entries(dnsdistSeries).map(([name, d], i) => ({
+    ...Object.entries(dnsdistFlat).map(([name, d], i) => ({
       name, type: 'line', smooth: true, symbol: 'none',
       data: mapToTimeline(d),
       lineStyle: { width: isSmall ? 1.5 : 2, color: COLORS[i % COLORS.length] },
       areaStyle: { opacity: 0.08 },
       connectNulls: true
     })),
-    ...Object.entries(resolverSeries).map(([name, d], i) => ({
+    ...Object.entries(resolverFlat).map(([name, d], i) => ({
       name, type: 'line', smooth: true, symbol: 'none',
       data: mapToTimeline(d),
-      lineStyle: { width: isSmall ? 1.5 : 2, type: 'dashed', color: COLORS[(i + Object.keys(dnsdistSeries).length) % COLORS.length] },
+      lineStyle: { width: isSmall ? 1.5 : 2, type: 'dashed', color: COLORS[(i + Object.keys(dnsdistFlat).length) % COLORS.length] },
       areaStyle: { opacity: 0.04 },
       connectNulls: true
     }))

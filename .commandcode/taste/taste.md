@@ -49,6 +49,9 @@
 - For DashDNS: Do not use a reverse proxy (Nginx/Apache) - serve DashDNS directly on its port. Confidence: 0.65
 - For recursor-exporter: Deploy pre-compiled binary instead of building on target servers to avoid needing Go compiler on resolvers. Confidence: 0.50
 
+# chart
+- For DashDNS QPS chart: Show per-server QPS lines instead of aggregated single line or two total lines (dnsdist vs resolver). Confidence: 0.70
+
 # resolver
 - To check resolver health: Query the recursor-exporter API on port 9000 for status, questions/hits, top queries, and top remotes. Confidence: 0.65
 - Prefer computing derived data (counts, stats) on the frontend/dashboard side rather than deploying updates to multiple remote resolvers. Confidence: 0.60
